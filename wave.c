@@ -1,0 +1,95 @@
+#include <stdlib.h>
+#include <math.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+#include "include/player_wavespec.h"
+#include "include/player_memmacro.h"
+#include "include/player_limit.h"
+#include "include/player_dataapi.h"
+#define PI 3.141592653589793
+
+static float loudness_attn_factor(float samplepercent,struct AttnTab * Tab,size_t *offset){
+	float Factor=0;
+	// Tab: 0: Start Percent 1: end percent 2: grad 3: sum Before the range
+	if (samplepercent > Tab ->Attntab[*offset+1] ){
+		*offset+=4;
+	}
+	Factor=Tab->Attntab[*offset+3]+(samplepercent-Tab->Attntab[*offset])*Tab->Attntab[*offset+2];
+	return Factor;
+}
+
+void CalcLoudnessAttnTab(struct AttnTab * Tab){
+	void * tmpptr;
+	float StartPercent=0;
+	float currentsum=0; // factor is 0 initially.
+
+	size_t NewAttnTabLen=Tab->Tab2TLen*2;
+	if(Tab->Tab2TLen%2==1){
+		printf("Illegal Tab Length\n");
+		abort();
+	}
+	if (Tab->TabLen==0){
+		SAFE_MALLOC_DEF(Tab->Attntab,NewAttnTabLen*sizeof(float));
+		Tab->TabLen=NewAttnTabLen;	
+	}
+	else {
+		if ( Tab ->TabLen != NewAttnTabLen){
+			SAFE_REALLOC_DEF(Tab->Attntab,NewAttnTabLen*sizeof(float),tmpptr);
+			Tab->TabLen=NewAttnTabLen;
+		}
+	}
+	memset(Tab->Attntab,0,NewAttnTabLen*sizeof(float));
+	for (unsigned int i=0;i < NewAttnTabLen;i+=4){
+		if (Tab->Tab2T[i/2+1] < 0){
+			printf("Fatal Error! The percentage must not be minus.\n");
+			abort();
+		}
+		Tab->Attntab[i]=StartPercent;
+		Tab->Attntab[i+1]=StartPercent+Tab->Tab2T[i/2+1];
+		Tab->Attntab[i+2]=Tab->Tab2T[i/2];
+		Tab->Attntab[i+3]=currentsum;
+		currentsum+=Tab->Tab2T[i/2]*Tab->Tab2T[i/2+1];
+		StartPercent=Tab->Attntab[i+1];
+	}
+	if (StartPercent != 1.0){
+		printf("Warning: The percentage sum (%f %%) is not 100%%\n",StartPercent*100);
+		printf("This may be caused by the precision loss. But it hardly happens.\n");
+		printf("You should check the input file to ensure that the percentage is arranged correctly.\n");
+	}
+}
+
+void WriteWave(float * Buffer,struct WaveTab * wt,struct WaveArgs * arg,size_t len){ //len refers to array element numbers.
+	size_t whole_process_len=arg->time*BACKEND_RATE; // 处理整个音符的采样长度
+	if (len < arg->pending_len){
+		return;
+	}
+	if (arg->Attn.Attntab == NULL || arg->Attn.TabLen%4 != 0){
+		return;
+	}
+	if(wt->Tab2T == NULL || wt->Attn==NULL){
+		return;	
+	}
+	// 用前需memset();
+	register float percent=0;
+
+	size_t attn_fac_offset_tmpvar=0;	
+	for(unsigned int j=0;j < wt->Attn->TabLen;j+=2){
+		percent=(float)(arg->wrote_len)/whole_process_len;
+		attn_fac_offset_tmpvar=RangeFArrayLookup(wt->Attn->Attntab+j%2,percent,wt->Attn->TabLen,4);
+		for (unsigned int i=0;i<arg->pending_len;i++){
+			percent=(float)(i+arg->wrote_len)/whole_process_len; //重复写一次同样的percent忽略不计
+			Buffer[i]+=loudness_attn_factor(percent,wt->Attn+j%2,&attn_fac_offset_tmpvar)*
+			sin((float)(i+arg->wrote_len)/BACKEND_RATE*2*PI*arg->freq*wt->Tab2T[j] + wt->Tab2T[j+1]);
+		}
+	}
+	// 写包络&归一
+	attn_fac_offset_tmpvar=RangeFArrayLookup(arg->Attn.Attntab,
+			(float)(arg->wrote_len)/whole_process_len,arg->Attn.TabLen,4);
+	for(unsigned int i=0;i<arg->pending_len;i++){
+		percent=(float)(i+arg->wrote_len)/whole_process_len;
+		Buffer[i]*=arg->Loudnessfac*arg->TrackGlobalLoudnessFac/wt->Tab2TLen*2;
+		Buffer[i]*=loudness_attn_factor(percent,&arg->Attn,&attn_fac_offset_tmpvar);
+	}
+	arg->wrote_len+=arg->pending_len;
+}

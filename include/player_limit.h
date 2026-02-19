@@ -1,0 +1,5 @@
+#define BACKEND_RATE 44100
+#define MAX_TRACKNUM 16
+#define MAX_LINELEN 1024
+#define MAX_PARALEN 32
+#define BUFFER_LEN 4096
