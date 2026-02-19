@@ -56,6 +56,8 @@ void CalcLoudnessAttnTab(struct AttnTab * Tab){
 		printf("Warning: The percentage sum (%f %%) is not 100%%\n",StartPercent*100);
 		printf("This may be caused by the precision loss. But it hardly happens.\n");
 		printf("You should check the input file to ensure that the percentage is arranged correctly.\n");
+		printf("We assume that the given input is correct, Trying to fix it automatically.\n");
+		Tab->Attntab[NewAttnTabLen-1-2]=1.0; // 减1进入下标范围,减2为末百分比
 	}
 }
 
