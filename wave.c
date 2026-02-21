@@ -73,25 +73,24 @@ void WriteWave(float * Buffer,struct WaveTab * wt,struct WaveArgs * arg,size_t l
 		return;	
 	}
 	// 用前需memset();
-	register float percent=0;
+	float percent=0;
+	register float sample=0;
 
-	size_t attn_fac_offset_tmpvar=0;	
+	size_t attn_fac_offset_tmpvar[2]={0};	
 	for(unsigned int j=0;j < wt->Attn->TabLen;j+=2){
 		percent=(float)(arg->wrote_len)/whole_process_len;
-		attn_fac_offset_tmpvar=RangeFArrayLookup(wt->Attn->Attntab+j%2,percent,wt->Attn->TabLen,4);
+		attn_fac_offset_tmpvar[0]=RangeFArrayLookup(wt->Attn->Attntab+j%2,percent,wt->Attn->TabLen,4);
+		attn_fac_offset_tmpvar[1]=RangeFArrayLookup(arg->Attn.Attntab,percent,arg->Attn.TabLen,4); // 每个轨道包络只有一个,在每一个倍频合成前 重置偏移
 		for (unsigned int i=0;i<arg->pending_len;i++){
-			percent=(float)(i+arg->wrote_len)/whole_process_len; //重复写一次同样的percent忽略不计
-			Buffer[i]+=loudness_attn_factor(percent,wt->Attn+j%2,&attn_fac_offset_tmpvar)*
+			percent=(float)(i+arg->wrote_len)/whole_process_len;
+	
+			sample=loudness_attn_factor(percent,wt->Attn+j%2,attn_fac_offset_tmpvar)*
 			sin((float)(i+arg->wrote_len)/BACKEND_RATE*2*PI*arg->freq*wt->Tab2T[j] + wt->Tab2T[j+1]);
+
+			sample*=arg->Loudnessfac*arg->TrackGlobalLoudnessFac/wt->Tab2TLen*2;
+			sample*=loudness_attn_factor(percent,&arg->Attn,attn_fac_offset_tmpvar+1);
+			Buffer[i]+=sample;
 		}
-	}
-	// 写包络&归一
-	attn_fac_offset_tmpvar=RangeFArrayLookup(arg->Attn.Attntab,
-			(float)(arg->wrote_len)/whole_process_len,arg->Attn.TabLen,4);
-	for(unsigned int i=0;i<arg->pending_len;i++){
-		percent=(float)(i+arg->wrote_len)/whole_process_len;
-		Buffer[i]*=arg->Loudnessfac*arg->TrackGlobalLoudnessFac/wt->Tab2TLen*2;
-		Buffer[i]*=loudness_attn_factor(percent,&arg->Attn,&attn_fac_offset_tmpvar);
 	}
 	arg->wrote_len+=arg->pending_len;
 }
