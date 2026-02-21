@@ -64,12 +64,17 @@ void CalcLoudnessAttnTab(struct AttnTab * Tab){
 void WriteWave(float * Buffer,struct WaveTab * wt,struct WaveArgs * arg,size_t len){ //len refers to array element numbers.
 	size_t whole_process_len=arg->time*BACKEND_RATE; // 处理整个音符的采样长度
 	if (len < arg->pending_len){
+		printf("Buffer length is not enough.\n");
 		return;
 	}
 	if (arg->Attn.Attntab == NULL || arg->Attn.TabLen%4 != 0){
+		printf("Illegal Tab Length or Attntab == NULL\n");
+		printf("Hint: Did you forget to use SNAT instruction in the input file?\n");
 		return;
 	}
 	if(wt->Tab2T == NULL || wt->Attn==NULL){
+		printf("Illegal WaveTab\n");
+		printf("Hint: Did you forget to use SWAA instruction in the input file?\n");
 		return;	
 	}
 	// 用前需memset();
