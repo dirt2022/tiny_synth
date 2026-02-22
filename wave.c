@@ -82,9 +82,9 @@ void WriteWave(float * Buffer,struct WaveTab * wt,struct WaveArgs * arg,size_t l
 	register float sample=0;
 
 	size_t attn_fac_offset_tmpvar[2]={0};	
-	for(unsigned int j=0;j < wt->Attn->TabLen;j+=2){
+	for(unsigned int j=0;j < wt->Tab2TLen;j+=2){
 		percent=(float)(arg->wrote_len)/whole_process_len;
-		attn_fac_offset_tmpvar[0]=RangeFArrayLookup(wt->Attn->Attntab+j/2,percent,wt->Attn->TabLen,4);
+		attn_fac_offset_tmpvar[0]=RangeFArrayLookup( (wt->Attn+j/2)->Attntab,percent,wt->Attn->TabLen,4);
 		attn_fac_offset_tmpvar[1]=RangeFArrayLookup(arg->Attn.Attntab,percent,arg->Attn.TabLen,4); // 每个轨道包络只有一个,在每一个倍频合成前 重置偏移
 		for (unsigned int i=0;i<arg->pending_len;i++){
 			percent=(float)(i+arg->wrote_len)/whole_process_len;
