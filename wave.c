@@ -84,12 +84,12 @@ void WriteWave(float * Buffer,struct WaveTab * wt,struct WaveArgs * arg,size_t l
 	size_t attn_fac_offset_tmpvar[2]={0};	
 	for(unsigned int j=0;j < wt->Attn->TabLen;j+=2){
 		percent=(float)(arg->wrote_len)/whole_process_len;
-		attn_fac_offset_tmpvar[0]=RangeFArrayLookup(wt->Attn->Attntab+j%2,percent,wt->Attn->TabLen,4);
+		attn_fac_offset_tmpvar[0]=RangeFArrayLookup(wt->Attn->Attntab+j/2,percent,wt->Attn->TabLen,4);
 		attn_fac_offset_tmpvar[1]=RangeFArrayLookup(arg->Attn.Attntab,percent,arg->Attn.TabLen,4); // 每个轨道包络只有一个,在每一个倍频合成前 重置偏移
 		for (unsigned int i=0;i<arg->pending_len;i++){
 			percent=(float)(i+arg->wrote_len)/whole_process_len;
 	
-			sample=loudness_attn_factor(percent,wt->Attn+j%2,attn_fac_offset_tmpvar)*
+			sample=loudness_attn_factor(percent,wt->Attn+j/2,attn_fac_offset_tmpvar)*
 			sin((float)(i+arg->wrote_len)/BACKEND_RATE*2*PI*arg->freq*wt->Tab2T[j] + wt->Tab2T[j+1]);
 
 			sample*=arg->Loudnessfac*arg->TrackGlobalLoudnessFac/wt->Tab2TLen*2;
