@@ -84,7 +84,7 @@ int parse_note(char * buffer,struct WaveArgs * arg,const struct GlobalStatus * g
 	arg->wrote_len=0;
 	arg->pending_len=0;
 	if (force_loudness_set==0){
-		arg->Loudnessfac=LoopFArrayLookup(llpt->Tab,ticks,llpt->Len,3);
+		arg->Loudnessfac=llpt->Tab[LoopFArrayLookup(llpt->Tab,ticks,llpt->Len,3)+2];
 	}
 	return backup_len-len;
 }
