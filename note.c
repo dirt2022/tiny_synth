@@ -14,6 +14,9 @@ static float note2freq(char * str,int * cosumed_len){
 	int offset=0;
 	if (*str == '0'){
 		len=1;
+		if (cosumed_len != NULL){
+			*cosumed_len = len;
+		}
 		return 0; //休止符只占一个字符, 即0,无前导字母,像其他音符一样,必须加入时值
 	}
 	if (*str == '#'){
