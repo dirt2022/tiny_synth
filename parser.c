@@ -163,7 +163,30 @@ void PlayerMain(FILE * fp,backend_stream_t s){ // 此处必在一行之首
 		}
 	}
 }
-
+static void ParserDeinit(void){
+	for(unsigned int i=0;i < MAX_TRACKNUM;i++){
+		if (ipt[i].line != NULL){
+			ChainTabDestory(ipt[i].line);
+		}
+		if (wt[i].Tab2T != NULL){
+			SAFE_FREE(wt[i].Tab2T);
+		}
+		if (wt[i].Attn != NULL){
+			for (unsigned int j=0;j<wt[i].Tab2TLen/2;j++){
+				if(wt[i].Attn[j].Tab2T != NULL){
+					SAFE_FREE(wt[i].Attn[j].Tab2T);
+				}
+				if(wt[i].Attn[j].Attntab != NULL){
+					SAFE_FREE(wt[i].Attn[j].Attntab);
+				}
+			}
+			SAFE_FREE(wt[i].Attn);
+		}
+		if (llpt.Tab != NULL){
+			SAFE_FREE(llpt.Tab);
+		}
+	}
+}
 void FileParse(FILE * fp,backend_stream_t s){
 	void * tmpptr=NULL;
 	unsigned int index=0;
@@ -239,6 +262,7 @@ void FileParse(FILE * fp,backend_stream_t s){
 				break;
 			}
 			default:{
+				ParserDeinit();
 				return;
 			}
 		}
