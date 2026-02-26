@@ -24,6 +24,8 @@ const char * KeyboardTab[]={
 static float note2freq(char * str,int * cosumed_len){
 	int len=0;
 	int offset=0;
+	char buff[4]; // 无需初始化
+
 	if (*str == '0'){
 		if (cosumed_len != NULL){
 			*cosumed_len = 1;
@@ -32,10 +34,18 @@ static float note2freq(char * str,int * cosumed_len){
 	}
 	if (*str == '#'){
 		len=3;
-		offset=strlookup(str,KeyboardTab,88)-12; // A1 偏移
+		for (unsigned int i=0;i<3;i++){
+			buff[i]=str[i];
+		}
+		buff[3]='\0';
+		offset=strlookup(buff,KeyboardTab,88)-12; // A1 偏移
 	} else {
 		len=2;
-		offset=strlookup(str,KeyboardTab,88)-12; // A1 偏移
+		for (unsigned int i=0;i<2;i++){
+			buff[i]=str[i];
+		}
+		buff[2]='\0';
+		offset=strlookup(buff,KeyboardTab,88)-12; // A1 偏移
 	}
 	if (cosumed_len != NULL){
 		*cosumed_len = len;
