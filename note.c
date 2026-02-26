@@ -58,7 +58,6 @@ int parse_note(char * buffer,struct WaveArgs * arg,const struct GlobalStatus * g
 	int cosumed_len=0;
 	int force_loudness_set=0;
 	arg->freq=note2freq(buffer,&cosumed_len);
-	printf("got freq %f\n",arg->freq);
 
 	buffer+=cosumed_len;
 	len-=cosumed_len;
