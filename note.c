@@ -9,46 +9,34 @@
 #include "include/player_dataapi.h"
 #include "include/player_parser.h"
 // 十二平均律实现
+const char * KeyboardTab[]={
+	"A0","#A0","B0","C1","#C1","D1","#D1","E1","F1",
+	"#F1","G1","#G1","A1","#A1","B1","C2","#C2","D2",
+	"#D2","E2","F2","#F2","G2","#G2","A2","#A2","B2",
+	"C3","#C3","D3","#D3","E3","F3","#F3","G3","#G3",
+	"A3","#A3","B3","C4","#C4","D4","#D4","E4","F4",
+	"#F4","G4","#G4","A4","#A4","B4","C5","#C5","D5",
+	"#D5","E5","F5","#F5","G5","#G5","A5","#A5","B5",
+	"C6","#C6","D6","#D6","E6","F6","#F6","G6","#G6",
+	"A6","#A6","B6","C7","#C7","D7","#D7","E7","F7",
+	"#F7","G7","#G7","A7","#A7","B7","C8"
+};
 static float note2freq(char * str,int * cosumed_len){
 	int len=0;
 	int offset=0;
 	if (*str == '0'){
-		len=1;
 		if (cosumed_len != NULL){
-			*cosumed_len = len;
+			*cosumed_len = 1;
 		}
-		return 0; //休止符只占一个字符, 即0,无前导字母,像其他音符一样,必须加入时值
+		return 0.0f; //休止符只占一个字符, 即0,无前导字母,像其他音符一样,必须加入时值
 	}
 	if (*str == '#'){
 		len=3;
-		if (str[1] >= 'C' && str[1] <= 'E'){
-			offset=2*(str[1]-'C')+(str[2]-'1')*12;
-			goto next;
-		}
-		if (str[1] == 'F' || str [1] == 'G'){
-			offset=2*(str[1]-'C')-1+(str[2]-'1')*12;
-			goto next;
-		}
-		if (str[1] == 'A' || str[1] == 'B'){
-			offset=2*(str[1]-'C')+1+(str[2]-'1')*12;
-			goto next;
-		}
+		offset=strlookup(str,KeyboardTab,88)-12; // A1 偏移
 	} else {
 		len=2;
-		if (str[0] >= 'C' && str[0] <= 'E'){
-			offset=2*(str[0]-'C'+(str[1]-'1')*12);
-			goto next;
-		}
-		if (str[0] == 'F' || str [0] == 'G'){
-			offset=2*(str[0]-'C')-1+(str[1]-'1')*12;
-			goto next;
-		}
-		if (str[0] == 'A' || str[0] == 'B'){
-			offset=2*(str[0]-'C')+1+(str[1]-'1')*12;
-			goto next;
-		}	
+		offset=strlookup(str,KeyboardTab,88)-12; // A1 偏移
 	}
-	next:
 	if (cosumed_len != NULL){
 		*cosumed_len = len;
 	}
@@ -60,6 +48,7 @@ int parse_note(char * buffer,struct WaveArgs * arg,const struct GlobalStatus * g
 	int cosumed_len=0;
 	int force_loudness_set=0;
 	arg->freq=note2freq(buffer,&cosumed_len);
+	printf("got freq %f\n",arg->freq);
 
 	buffer+=cosumed_len;
 	len-=cosumed_len;
