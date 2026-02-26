@@ -66,7 +66,7 @@ static int CosumeTrack(FILE * fp,backend_stream_t s){
 			fseek(fp,*(int *)(ipt[i].line->data),SEEK_SET);
 			for(unsigned int j=0;j < MAX_LINELEN;j++){
 				GETCHAR(fp,fbuffer[j],tmpvar);
-				if(fbuffer[j] == '\r' || fbuffer[j] == '\n'){
+				if(fbuffer[j] == '\n'){ // only support unix style file.
 					fbuffer[j]=0;
 					ipt[i].line=ChainTabHeadCosume(ipt[i].line);
 					writeflag=0;
