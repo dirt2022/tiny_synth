@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#include <sys/param.h>
 #include <sys/types.h>
 #include "include/player_strapi.h"
 #include "include/player_wavespec.h"
@@ -24,6 +25,7 @@ const char * KeyboardTab[]={
 static float note2freq(char * str,int * cosumed_len){
 	int len=0;
 	int offset=0;
+	printf("got %s\n",str);
 	char buff[4]; // 无需初始化
 
 	if (*str == '0'){
@@ -58,6 +60,7 @@ int parse_note(char * buffer,struct WaveArgs * arg,const struct GlobalStatus * g
 	int cosumed_len=0;
 	int force_loudness_set=0;
 	arg->freq=note2freq(buffer,&cosumed_len);
+	printf("got freq %f\n",arg->freq);
 
 	buffer+=cosumed_len;
 	len-=cosumed_len;
@@ -65,14 +68,14 @@ int parse_note(char * buffer,struct WaveArgs * arg,const struct GlobalStatus * g
 		switch(*buffer){
 			case 'T':{
 				arg->time=atof(buffer+1)/(gs->bpm)*60;
-				cosumed_len=next_letter_offset(buffer+1)+1;
+				cosumed_len=next_letter_offset(buffer+1);
 				buffer+=cosumed_len;
 				len-=cosumed_len;
 				break;
 			}
 			case 'L':{
 				arg->Loudnessfac=atof(buffer+1);
-				cosumed_len=next_letter_offset(buffer+1)+1;
+				cosumed_len=next_letter_offset(buffer+1);
 				buffer+=cosumed_len;
 				len-=cosumed_len;
 				force_loudness_set=1;

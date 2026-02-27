@@ -256,7 +256,7 @@ void FileParse(FILE * fp,backend_stream_t s){
 				if (args[firstparam].Attn.Tab2T != NULL){
 					SAFE_FREE(args[firstparam].Attn.Tab2T);
 				}
-				args[firstparam].Attn.Tab2T=str2farray(fbuffer+6+next_space_offset(fbuffer+5) // 格式是: 先写音轨号,在写包络点
+				args[firstparam].Attn.Tab2T=str2farray(fbuffer+5+next_space_offset(fbuffer+5) // 格式是: 先写音轨号,在写包络点
 				,&args[firstparam].Attn.Tab2TLen);
 				CalcLoudnessAttnTab(&args[firstparam].Attn);
 				break;
