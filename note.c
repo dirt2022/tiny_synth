@@ -68,14 +68,14 @@ int parse_note(char * buffer,struct WaveArgs * arg,const struct GlobalStatus * g
 		switch(*buffer){
 			case 'T':{
 				arg->time=atof(buffer+1)/(gs->bpm)*60;
-				cosumed_len=next_letter_offset(buffer+1);
+				cosumed_len=next_letter_offset(buffer+1)+1; //要跳过字母T本身
 				buffer+=cosumed_len;
 				len-=cosumed_len;
 				break;
 			}
 			case 'L':{
 				arg->Loudnessfac=atof(buffer+1);
-				cosumed_len=next_letter_offset(buffer+1);
+				cosumed_len=next_letter_offset(buffer+1)+1; //同理
 				buffer+=cosumed_len;
 				len-=cosumed_len;
 				force_loudness_set=1;
