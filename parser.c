@@ -73,7 +73,7 @@ static int CosumeTrack(FILE * fp,backend_stream_t s){
 					break;
 				}
 				if(fbuffer[j] == ' '){
-					fbuffer[j]=0;
+					// 移除这个行	来保证 对空格判断无误, 且parse_note已经能够处理空格
 					break;
 				}
 			}
@@ -247,7 +247,7 @@ void FileParse(FILE * fp,backend_stream_t s){
 			}
 			case 5:{
 				printf("Setting TrackFactor\n");
-				args[atoi(fbuffer+5)].TrackGlobalLoudnessFac=atof(fbuffer+5+next_letter_offset(fbuffer+5));
+				args[atoi(fbuffer+5)].TrackGlobalLoudnessFac=atof(fbuffer+5+next_letter_offset(fbuffer+5,NULL));
 				printf("Set %f\n",args[atoi(fbuffer+5)].TrackGlobalLoudnessFac);
 				break;
 			}

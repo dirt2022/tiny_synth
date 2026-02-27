@@ -38,17 +38,20 @@ unsigned int next_space_offset(const char * str){
 	return 0;
 }
 
-unsigned int next_letter_offset(const char * str){
+unsigned int next_letter_offset(const char * str,int * is_space_detected){
 	unsigned int offset=0;
 	for(;;){
 		if(str[offset] == 0){
+			if(is_space_detected != NULL){*is_space_detected=0;}
 			return offset;
 		}
 		if(str[offset] == ' '){
+			if(is_space_detected != NULL){*is_space_detected=1;}
 			return offset+1;
 		}
 		if( (str[offset] >= 'A' && str[offset] <= 'Z')||
 			(str[offset] >= 'a' && str[offset] <= 'z') ){
+			if(is_space_detected != NULL){*is_space_detected=0;}
 			return offset;
 		}
 		offset++;

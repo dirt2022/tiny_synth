@@ -59,6 +59,7 @@ int parse_note(char * buffer,struct WaveArgs * arg,const struct GlobalStatus * g
 	int backup_len=len;
 	int cosumed_len=0;
 	int force_loudness_set=0;
+	int space_flag;
 	arg->freq=note2freq(buffer,&cosumed_len);
 	printf("got freq %f\n",arg->freq);
 
@@ -68,14 +69,14 @@ int parse_note(char * buffer,struct WaveArgs * arg,const struct GlobalStatus * g
 		switch(*buffer){
 			case 'T':{
 				arg->time=atof(buffer+1)/(gs->bpm)*60;
-				cosumed_len=next_letter_offset(buffer+1)+1; //要跳过字母T本身
+				cosumed_len=next_letter_offset(buffer+1,&space_flag)+1; //要跳过字母T本身
 				buffer+=cosumed_len;
 				len-=cosumed_len;
 				break;
 			}
 			case 'L':{
 				arg->Loudnessfac=atof(buffer+1);
-				cosumed_len=next_letter_offset(buffer+1)+1; //同理
+				cosumed_len=next_letter_offset(buffer+1,&space_flag)+1; //同理
 				buffer+=cosumed_len;
 				len-=cosumed_len;
 				force_loudness_set=1;
@@ -83,6 +84,9 @@ int parse_note(char * buffer,struct WaveArgs * arg,const struct GlobalStatus * g
 			}
 			default:{
 				goto exit;
+			}
+			if(space_flag){ //此时已经归位到下一个param,开头不为空格的检查不会触发,故手动退出
+				break;
 			}
 		}
 	}
