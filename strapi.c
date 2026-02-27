@@ -67,7 +67,7 @@ float * str2farray(const char * str,size_t * wrote_array_len){
 	SAFE_MALLOC_DEF(res,cnt*sizeof(float));
 	for(unsigned int i=0;i<cnt;i++){
 		res[i]=atof(str);
-		str+=next_space_offset(str)+1; // We don't have to restore the pointer.
+		str+=next_space_offset(str); // We don't have to restore the pointer.
 	}
 	if(wrote_array_len != NULL){
 		*wrote_array_len=cnt;
