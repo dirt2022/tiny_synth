@@ -26,20 +26,34 @@ static int halfcmp(const char *s1, const char *s2, char end) {
 
 unsigned int next_space_offset(const char * str){
 	unsigned int offset=0;
-	for(;str[offset]!=0 && str[offset] != ' ';){
+	for(;;){
+		if(str[offset]==0){
+			return offset;
+		}
+		if (str[offset]==' '){
+			return offset+1;
+		}
 		offset++;
 	}
-	return offset;
+	return 0;
 }
 
 unsigned int next_letter_offset(const char * str){
 	unsigned int offset=0;
-	for(;str[offset]!=0 &&
-		str[offset]!=' ' && ( (str[offset] < 'A' || str[offset] > 'Z') &&
-		(str[offset] < 'a' || str[offset] > 'z') ) ;){
+	for(;;){
+		if(str[offset] == 0){
+			return offset;
+		}
+		if(str[offset] == ' '){
+			return offset+1;
+		}
+		if( (str[offset] >= 'A' && str[offset] <= 'Z')||
+			(str[offset] >= 'a' && str[offset] <= 'z') ){
+			return offset;
+		}
 		offset++;
 	}
-	return offset;
+	return 0;
 }
 
 float * str2farray(const char * str,size_t * wrote_array_len){
@@ -90,10 +104,10 @@ int myfgets(char * buffer,int size,FILE *fp){
 			buffer[i]=0;
 			return i;
 		}
-		if (ch == '\n' || ch == '\r'){
+		if (ch == '\n'){ // remove support for Windows or Mac Platforms.
 			ch=0;
 			buffer[i]=ch;
-			return i;
+			return i+1;
 		}
 		buffer[i]=ch;
 	}
