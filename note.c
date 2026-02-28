@@ -40,14 +40,14 @@ static float note2freq(char * str,int * cosumed_len){
 			buff[i]=str[i];
 		}
 		buff[3]='\0';
-		offset=strlookup(buff,KeyboardTab,88)-12; // A1 偏移
+		offset=strlookup(buff,KeyboardTab,88)-48; // A4 偏移
 	} else {
 		len=2;
 		for (unsigned int i=0;i<2;i++){
 			buff[i]=str[i];
 		}
 		buff[2]='\0';
-		offset=strlookup(buff,KeyboardTab,88)-12; // A1 偏移
+		offset=strlookup(buff,KeyboardTab,88)-48; // A4 偏移
 	}
 	if (cosumed_len != NULL){
 		*cosumed_len = len;
