@@ -114,6 +114,7 @@ static void SeekTrack(FILE * fp,int tracknum){
 	int offset=0;
 
 	for(unsigned int i=0; i< gs.tracknum; i++){
+		start:
 		if(ipt[i].line == NULL||ipt[i].line->data == NULL){ //音轨间必须紧密书写, @ 0 ... 下一行就得是 @ 1 .....
 			GETCHAR_NINT(fp,ch);
 			if(ch == '@'){
@@ -132,6 +133,7 @@ static void SeekTrack(FILE * fp,int tracknum){
 				while(ch!='\n'){
 					GETCHAR_NINT(fp,ch);
 				}
+				goto start;
 			}
 			if (ch == '!') { // End entered.
 				gs.SectionInputEnd=1;
