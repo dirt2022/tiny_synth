@@ -10,7 +10,7 @@
 #include "include/player_dataapi.h"
 #include "include/player_parser.h"
 // 十二平均律实现
-const char * KeyboardTab[]={
+static const char * KeyboardTab[]={
 	"A0","#A0","B0","C1","#C1","D1","#D1","E1","F1",
 	"#F1","G1","#G1","A1","#A1","B1","C2","#C2","D2",
 	"#D2","E2","F2","#F2","G2","#G2","A2","#A2","B2",
