@@ -252,6 +252,7 @@ void FileParse(FILE * fp,backend_stream_t s){
 				break;
 			}
 			case 6:{
+				printf("Setting envelop\n");
 				firstparam=atoi(fbuffer+5);
 				if (args[firstparam].Attn.Tab2T != NULL){
 					SAFE_FREE(args[firstparam].Attn.Tab2T);
