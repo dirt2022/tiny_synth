@@ -128,6 +128,11 @@ static void SeekTrack(FILE * fp,int tracknum){
 				}
 				continue;
 			}
+			if (ch == '#') {
+				while(ch!='\n'){
+					GETCHAR_NINT(fp,ch);
+				}
+			}
 			if (ch == '!') { // End entered.
 				gs.SectionInputEnd=1;
 				break;
