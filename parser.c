@@ -199,6 +199,7 @@ void FileParse(FILE * fp,backend_stream_t s){
 	unsigned int index=0;
 	char fbuffer[MAX_LINELEN]={0};
 	int firstparam=0;
+	size_t tablen_tmpvar=0;
 
 	while(!feof(fp)){
 		myfgets(fbuffer,MAX_LINELEN,fp);
@@ -227,16 +228,20 @@ void FileParse(FILE * fp,backend_stream_t s){
 				printf("Setting loudness tab and wave tab...\n");
 				for(unsigned int i=0;i<gs.tracknum;i++){
 					myfgets(fbuffer,MAX_LINELEN,fp);
-					wt[i].Tab2T=str2farray(fbuffer,&wt[i].Tab2TLen);
+					if (wt[i].Tab2T != NULL){
+						SAFE_FREE(wt[i].Tab2T);
+					}
+					wt[i].Tab2T=str2farray(fbuffer,&tablen_tmpvar);
 					if (wt[i].Attn != NULL){
 						for(unsigned int j=0;j<wt[i].Tab2TLen/2;j++){
 							SAFE_FREE(wt[i].Attn[j].Attntab);
 							SAFE_FREE(wt[i].Attn[j].Tab2T);
 						}
-						SAFE_REALLOC_DEF(wt[i].Attn,sizeof(struct AttnTab)*wt[i].Tab2TLen/2,tmpptr);
+						SAFE_REALLOC_DEF(wt[i].Attn,sizeof(struct AttnTab)*tablen_tmpvar/2,tmpptr);
 					} else {
-						SAFE_MALLOC_DEF(wt[i].Attn,sizeof(struct AttnTab)*wt[i].Tab2TLen/2);
+						SAFE_MALLOC_DEF(wt[i].Attn,sizeof(struct AttnTab)*tablen_tmpvar/2);
 					}
+					wt[i].Tab2TLen=tablen_tmpvar;
 					for(unsigned int j=0;j<wt[i].Tab2TLen/2;j++){
 						wt[i].Attn[j].TabLen=0;
 					}
