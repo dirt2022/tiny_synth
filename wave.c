@@ -62,7 +62,7 @@ void CalcLoudnessAttnTab(struct AttnTab * Tab){
 }
 
 void WriteWave(float * Buffer,struct WaveTab * wt,struct WaveArgs * arg,size_t len){ //len refers to array element numbers.
-	size_t whole_process_len=arg->time*BACKEND_RATE; // 处理整个音符的采样长度
+	size_t whole_process_len=arg->total_len; // 处理整个音符的采样长度
 	if (len < arg->pending_len){
 		printf("Buffer length is not enough.\n");
 		return;

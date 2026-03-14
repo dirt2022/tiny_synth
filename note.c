@@ -7,6 +7,7 @@
 #include "include/player_strapi.h"
 #include "include/player_wavespec.h"
 #include "include/player_backend.h"
+#include "include/player_limit.h"
 #include "include/player_dataapi.h"
 #include "include/player_parser.h"
 // 十二平均律实现
@@ -68,7 +69,7 @@ int parse_note(char * buffer,struct WaveArgs * arg,const struct GlobalStatus * g
 	while(len > 0 && *buffer != ' '){
 		switch(*buffer){
 			case 'T':{
-				arg->time=atof(buffer+1)/(gs->bpm)*60;
+				arg->total_len=atof(buffer+1)/(gs->bpm)*60*BACKEND_RATE;
 				cosumed_len=next_letter_offset(buffer+1,&space_flag)+1; //要跳过字母T本身
 				buffer+=cosumed_len;
 				len-=cosumed_len;

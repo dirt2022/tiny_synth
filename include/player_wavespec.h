@@ -22,11 +22,11 @@ struct LoudnessLoopTab { // 3 turpled: tick start, tick stop, factor
 };
 
 struct WaveArgs {
-	float time;
 	float Loudnessfac;
 	float TrackGlobalLoudnessFac;
 	float freq;
 	struct AttnTab Attn;
+	size_t total_len;
 	size_t wrote_len;
 	size_t pending_len; // len 指数组长度, 或者采样数量
 };

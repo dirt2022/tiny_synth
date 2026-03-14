@@ -54,10 +54,10 @@ static int CosumeTrack(FILE * fp,backend_stream_t s){
 	int writeflag=1;
 	int skipcnt=0;
 
-	float time_min=(float)BUFFER_LEN/(float)BACKEND_RATE;
+	size_t len_min=(float)BUFFER_LEN/(float)BACKEND_RATE;
 	for(unsigned int i=0; i<gs.tracknum; i++){
-		if( args->wrote_len != (unsigned int)(args[i].time*BACKEND_RATE) ){
-			time_min=MIN(time_min,(args[i].time*BACKEND_RATE-args[i].wrote_len)/BACKEND_RATE);
+		if( args->wrote_len != (unsigned int)(args[i].total_len) ){
+			len_min=MIN(len_min,(args[i].total_len-args[i].wrote_len));
 		} else {
 			if(gs.SectionInputEnd == 1){
 				skipcnt++;
@@ -84,20 +84,20 @@ static int CosumeTrack(FILE * fp,backend_stream_t s){
 				parse_note(fbuffer,args+i,&gs,&llpt,gs.ticks,MAX_LINELEN);
 			}
 
-			if(time_min > args[i].time){
-				time_min=args[i].time;
+			if(len_min > args[i].total_len){
+				len_min=args[i].total_len;
 			}
 		}
 	}
 	if(skipcnt == gs.tracknum){
 		return 1;
 	}
-	gs.ticks+=time_min/60*gs.bpm;
+	gs.ticks+=(float)len_min/60*gs.bpm/BACKEND_RATE;
 	for(unsigned int i=0; i<gs.tracknum; i++){
-		args[i].pending_len=time_min*BACKEND_RATE;
+		args[i].pending_len=len_min;
 		WriteWave(buffer,wt+i,args+i,BUFFER_LEN);
 	}
-	BackendWrite(s,buffer,time_min*BACKEND_RATE*sizeof(float));
+	BackendWrite(s,buffer,len_min*sizeof(float));
 	return 0;
 }
 
