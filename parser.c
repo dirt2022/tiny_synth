@@ -54,7 +54,7 @@ static int CosumeTrack(FILE * fp,backend_stream_t s){
 	int writeflag=1;
 	int skipcnt=0;
 
-	size_t len_min=(float)BUFFER_LEN/(float)BACKEND_RATE;
+	size_t len_min=BUFFER_LEN;
 	for(unsigned int i=0; i<gs.tracknum; i++){
 		if( args->wrote_len != (unsigned int)(args[i].total_len) ){
 			len_min=MIN(len_min,(args[i].total_len-args[i].wrote_len));
