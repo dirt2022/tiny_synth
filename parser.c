@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <sys/param.h>
 #include <sys/types.h>
+#include <string.h>
 #include "include/player_memmacro.h"
 #include "include/player_strapi.h"
 #include "include/player_dataapi.h"
@@ -12,6 +13,10 @@
 #include "include/player_backend.h"
 #include "include/player_parser.h"
 #include "include/player_note.h"
+
+#ifndef MIN
+#define MIN(x,y) ((x>y)?y:x)
+#endif
 
 #define GETCHAR(fp,x,inttmpvar) \
 	inttmpvar=fgetc(fp); \

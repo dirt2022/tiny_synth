@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "include/player_memmacro.h"
+#include <string.h>
 // 注: next_*_offset 函数 是 找下一个block的偏移,故字符 str[next_space_offset(str)],并不是空格,而是下一个block的起始字符
 // this module defines args parser functions.
 static int halfcmp(const char *s1, const char *s2, char end) {
