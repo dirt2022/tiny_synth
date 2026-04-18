@@ -2,7 +2,6 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/endian.h>
 #include <pulse/simple.h>
 #include <sys/types.h>
 #include "include/player_backend.h"
