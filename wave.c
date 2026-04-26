@@ -31,7 +31,7 @@ void CalcLoudnessAttnTab(struct AttnTab * Tab){
 	}
 	if (Tab->TabLen==0){
 		SAFE_MALLOC_DEF(Tab->Attntab,NewAttnTabLen*sizeof(float));
-		Tab->TabLen=NewAttnTabLen;	
+		Tab->TabLen=NewAttnTabLen;
 	}
 	else {
 		if ( Tab ->TabLen != NewAttnTabLen){
@@ -75,25 +75,38 @@ void WriteWave(float * Buffer,struct WaveTab * wt,struct WaveArgs * arg,size_t l
 	if(wt->Tab2T == NULL || wt->Attn==NULL){
 		printf("Illegal WaveTab\n");
 		printf("Hint: Did you forget to use SWAA instruction in the input file?\n");
-		return;	
+		return;
+	}
+	if(wt->Tab2TLen/2 > MAX_WAVETAB_LEN){
+		printf("Due to the need of calucating relative Loudness to keep envelop not affected by time-based frequency domain functon.\n");
+		printf("using a track that contains more than %d wavetab elements is not allowed\n",MAX_WAVETAB_LEN);
+		return;
 	}
 	// 用前需memset();
-	float percent=0;
+	float percent=(float)(arg->wrote_len)/whole_process_len;
 	register float sample=0;
 
-	size_t attn_fac_offset_tmpvar[2]={0};	
-	for(unsigned int j=0;j < wt->Tab2TLen;j+=2){
-		percent=(float)(arg->wrote_len)/whole_process_len;
-		attn_fac_offset_tmpvar[0]=RangeFArrayLookup( (wt->Attn+j/2)->Attntab,percent,wt->Attn->TabLen,4);
-		attn_fac_offset_tmpvar[1]=RangeFArrayLookup(arg->Attn.Attntab,percent,arg->Attn.TabLen,4); // 每个轨道包络只有一个,在每一个倍频合成前 重置偏移
-		for (unsigned int i=0;i<arg->pending_len;i++){
-			percent=(float)(i+arg->wrote_len)/whole_process_len;
-	
-			sample=loudness_attn_factor(percent,wt->Attn+j/2,attn_fac_offset_tmpvar)*
-			sin((float)(i+arg->wrote_len)/BACKEND_RATE*2*PI*arg->freq*wt->Tab2T[j] + wt->Tab2T[j+1]);
+	size_t attn_fac_offset_tmpvar[MAX_WAVETAB_LEN+1]={0};
+	float Loudness_Factor[MAX_WAVETAB_LEN+1]={0};
+	float Loudness_Factor_sum;
 
-			sample*=arg->Loudnessfac*arg->TrackGlobalLoudnessFac/wt->Tab2TLen*2;
-			sample*=loudness_attn_factor(percent,&arg->Attn,attn_fac_offset_tmpvar+1);
+	for(unsigned int i=0;i < wt->Tab2TLen;i+=2){
+		attn_fac_offset_tmpvar[i/2]=RangeFArrayLookup( (wt->Attn+i/2)->Attntab,percent,(wt->Attn+i/2)->TabLen,4);
+	}
+	attn_fac_offset_tmpvar[MAX_WAVETAB_LEN]=RangeFArrayLookup(arg->Attn.Attntab,percent,arg->Attn.TabLen,4);
+
+	for(unsigned int i=0;i<arg->pending_len;i++){
+		Loudness_Factor_sum=0.0f;
+		for(unsigned int j=0;j < wt->Tab2TLen;j+=2){
+			percent=(float)(i+arg->wrote_len)/whole_process_len;
+			Loudness_Factor[j/2]=loudness_attn_factor(percent,wt->Attn+j/2,attn_fac_offset_tmpvar+j/2);
+			Loudness_Factor_sum+=Loudness_Factor[j/2];
+		}
+		for(unsigned int j=0;j < wt->Tab2TLen;j+=2){
+			sample=sin((float)(i+arg->wrote_len)/BACKEND_RATE*2*PI*arg->freq*wt->Tab2T[j] + wt->Tab2T[j+1]);
+			sample*=Loudness_Factor[j/2];
+			sample*=arg->Loudnessfac*arg->TrackGlobalLoudnessFac/Loudness_Factor_sum;
+			sample*=loudness_attn_factor(percent,&arg->Attn,attn_fac_offset_tmpvar+MAX_WAVETAB_LEN);
 			Buffer[i]+=sample;
 		}
 	}
