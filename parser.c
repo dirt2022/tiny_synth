@@ -142,6 +142,11 @@ static void SeekTrack(FILE * fp,int tracknum){
 			}
 			if (ch == '!') { // End entered.
 				gs.SectionInputEnd=1;
+				ch=fgetc(fp);
+				if (ch != '\n' && ch != EOF){
+					printf("Fatal: There isn't a \\n right after the end mark\n");
+					abort();
+				}
 				break;
 			}	
 		}
