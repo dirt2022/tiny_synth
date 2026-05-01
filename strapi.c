@@ -116,5 +116,5 @@ int myfgets(char * buffer,int size,FILE *fp){
 		}
 		buffer[i]=ch;
 	}
-	return 0;
+	return size+1;
 }

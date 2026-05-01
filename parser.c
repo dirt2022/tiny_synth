@@ -210,9 +210,18 @@ void FileParse(FILE * fp,backend_stream_t s){
 	char fbuffer[MAX_LINELEN]={0};
 	int firstparam=0;
 	size_t tablen_tmpvar=0;
+	int read_len=0;
 
-	while(!feof(fp)){
-		myfgets(fbuffer,MAX_LINELEN,fp);
+	for(;;){
+		if (feof(fp) != 0){
+			ParserDeinit();
+			return;
+		}
+		read_len=myfgets(fbuffer,MAX_LINELEN,fp);
+		if (read_len == 0){ // 先前没有读取失败,现在遇到eof了
+			ParserDeinit();
+			return;
+		}
 		printf("string %s\n",fbuffer);
 		index=strlookup(fbuffer,Keywords,7);
 		switch (index){
