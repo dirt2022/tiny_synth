@@ -61,13 +61,15 @@ static int CosumeTrack(FILE * fp,backend_stream_t s){
 
 	size_t len_min=BUFFER_LEN;
 	for(unsigned int i=0; i<gs.tracknum; i++){
-		if( args->wrote_len != (unsigned int)(args[i].total_len) ){
+		if( args[i].wrote_len != (unsigned int)(args[i].total_len) ){
 			len_min=MIN(len_min,(args[i].total_len-args[i].wrote_len));
 		} else {
 			if(gs.SectionInputEnd == 1){
 				skipcnt++;
+				args[i].skipflag=1;
 				continue;
 			}
+			args[i].skipflag=0;
 			fseek(fp,*(int *)(ipt[i].line->data),SEEK_SET);
 			for(unsigned int j=0;j < MAX_LINELEN;j++){
 				GETCHAR(fp,fbuffer[j],tmpvar);
@@ -99,6 +101,9 @@ static int CosumeTrack(FILE * fp,backend_stream_t s){
 	}
 	gs.ticks+=(float)len_min/60*gs.bpm/BACKEND_RATE;
 	for(unsigned int i=0; i<gs.tracknum; i++){
+		if(args[i].skipflag == 1){
+			continue;
+		}
 		args[i].pending_len=len_min;
 		WriteWave(buffer,wt+i,args+i,BUFFER_LEN);
 	}

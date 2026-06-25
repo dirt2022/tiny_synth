@@ -29,6 +29,7 @@ struct WaveArgs {
 	size_t total_len;
 	size_t wrote_len;
 	size_t pending_len; // len 指数组长度, 或者采样数量
+	char skipflag;
 };
 
 void CalcLoudnessAttnTab(struct AttnTab * Tab);
