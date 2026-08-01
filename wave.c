@@ -95,6 +95,10 @@ void WriteWave(float * Buffer,struct WaveTab * wt,struct WaveArgs * arg,size_t l
 	}
 	attn_fac_offset_tmpvar[MAX_WAVETAB_LEN]=RangeFArrayLookup(arg->Attn.Attntab,percent,arg->Attn.TabLen,4);
 
+	if (arg->freq == 0.0f){
+		goto write_finished_work;
+	}
+
 	for(unsigned int i=0;i<arg->pending_len;i++){
 		Loudness_Factor_sum=0.0f;
 		for(unsigned int j=0;j < wt->Tab2TLen;j+=2){
@@ -110,5 +114,6 @@ void WriteWave(float * Buffer,struct WaveTab * wt,struct WaveArgs * arg,size_t l
 			Buffer[i]+=sample;
 		}
 	}
+write_finished_work:
 	arg->wrote_len+=arg->pending_len;
 }
