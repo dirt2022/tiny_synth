@@ -42,10 +42,15 @@ static struct pa_simple * PulseAudio_Init(){ // the only backend.
 }
 
 int PulseAudio_Write(backend_stream_t s,void * buffer,size_t size){
+	int ret=0;
 	if (is_be_cpu==1){
 		buffer_be2le(buffer,size);
 	}
-	return pa_simple_write((struct pa_simple *)s,buffer,size,NULL);
+	ret=pa_simple_write((struct pa_simple *)s,buffer,size,NULL);
+	if (ret == 0){
+		return size;
+	}
+	return -1;
 }
 
 int File_Write(backend_stream_t s,void * buffer,size_t size){
@@ -53,13 +58,8 @@ int File_Write(backend_stream_t s,void * buffer,size_t size){
 		buffer_be2le(buffer,size);
 	}
 	int res=0;
-	for(size_t i=0;i < size;i++){
-		res=fputc(((char *)buffer)[i],s);
-		if (res == EOF){
-			return -1;
-		}
-	}
-	return size;
+	res=fwrite(buffer,sizeof(float),size/sizeof(float),(FILE *)s);
+	return res*sizeof(float);
 }
 
 

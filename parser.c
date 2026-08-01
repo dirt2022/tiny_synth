@@ -60,6 +60,7 @@ static int CosumeTrack(FILE * fp,backend_stream_t s){
 	int skipcnt=0;
 
 	size_t len_min=BUFFER_LEN;
+	int backend_write_ret=0;
 	for(unsigned int i=0; i<gs.tracknum; i++){
 		if( args[i].wrote_len != (unsigned int)(args[i].total_len) ){
 			len_min=MIN(len_min,(args[i].total_len-args[i].wrote_len));
@@ -107,7 +108,11 @@ static int CosumeTrack(FILE * fp,backend_stream_t s){
 		args[i].pending_len=len_min;
 		WriteWave(buffer,wt+i,args+i,BUFFER_LEN);
 	}
-	BackendWrite(s,buffer,len_min*sizeof(float));
+	backend_write_ret=BackendWrite(s,buffer,len_min*sizeof(float));
+	if (backend_write_ret != len_min*sizeof(float)){
+		printf("Failed to write buffer!\n");
+		abort();
+	}
 	return 0;
 }
 
