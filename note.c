@@ -26,7 +26,6 @@ static const char * KeyboardTab[]={
 static float note2freq(char * str,int * cosumed_len){
 	int len=0;
 	int offset=0;
-	printf("got %s\n",str);
 	char buff[4]; // 无需初始化
 
 	if (*str == '0'){
@@ -62,7 +61,6 @@ int parse_note(char * buffer,struct WaveArgs * arg,const struct GlobalStatus * g
 	int force_loudness_set=0;
 	int space_flag;
 	arg->freq=note2freq(buffer,&cosumed_len);
-	printf("got freq %f\n",arg->freq);
 
 	buffer+=cosumed_len;
 	len-=cosumed_len;
