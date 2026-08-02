@@ -9,6 +9,8 @@
 #include "include/player_dataapi.h"
 #define PI 3.141592653589793
 
+static const float backend_rate_backward=1.0f/((float)BACKEND_RATE);
+
 static float loudness_attn_factor(float samplepercent,struct AttnTab * Tab,size_t *offset){
 	float Factor=0;
 	// Tab: 0: Start Percent 1: end percent 2: grad 3: sum Before the range
@@ -90,8 +92,8 @@ void WriteWave(float * Buffer,struct WaveTab * wt,struct WaveArgs * arg,size_t l
 	float Loudness_Factor[MAX_WAVETAB_LEN+1]={0};
 	float Loudness_Factor_sum;
 
-	for(unsigned int i=0;i < wt->Tab2TLen;i+=2){
-		attn_fac_offset_tmpvar[i/2]=RangeFArrayLookup( (wt->Attn+i/2)->Attntab,percent,(wt->Attn+i/2)->TabLen,4);
+	for(unsigned int i=0,j=0;i < wt->Tab2TLen;i+=2,j++){
+		attn_fac_offset_tmpvar[j]=RangeFArrayLookup( (wt->Attn+j)->Attntab,percent,(wt->Attn+j)->TabLen,4);
 	}
 	attn_fac_offset_tmpvar[MAX_WAVETAB_LEN]=RangeFArrayLookup(arg->Attn.Attntab,percent,arg->Attn.TabLen,4);
 
@@ -101,14 +103,14 @@ void WriteWave(float * Buffer,struct WaveTab * wt,struct WaveArgs * arg,size_t l
 
 	for(unsigned int i=0;i<arg->pending_len;i++){
 		Loudness_Factor_sum=0.0f;
-		for(unsigned int j=0;j < wt->Tab2TLen;j+=2){
+		for(unsigned int j=0,k=0;j < wt->Tab2TLen;j+=2,k++){
 			percent=(float)(i+arg->wrote_len)/whole_process_len;
-			Loudness_Factor[j/2]=loudness_attn_factor(percent,wt->Attn+j/2,attn_fac_offset_tmpvar+j/2);
-			Loudness_Factor_sum+=Loudness_Factor[j/2];
+			Loudness_Factor[k]=loudness_attn_factor(percent,wt->Attn+k,attn_fac_offset_tmpvar+k);
+			Loudness_Factor_sum+=Loudness_Factor[k];
 		}
-		for(unsigned int j=0;j < wt->Tab2TLen;j+=2){
-			sample=sin((float)(i+arg->wrote_len)/BACKEND_RATE*2*PI*arg->freq*wt->Tab2T[j] + wt->Tab2T[j+1]);
-			sample*=Loudness_Factor[j/2];
+		for(unsigned int j=0,k=0;j < wt->Tab2TLen;j+=2,k++){
+			sample=sin((float)(i+arg->wrote_len)*backend_rate_backward*2*PI*arg->freq*wt->Tab2T[j] + wt->Tab2T[j+1]);
+			sample*=Loudness_Factor[k];
 			sample*=(Loudness_Factor_sum == 0.0f) ? 0.0f : arg->Loudnessfac*arg->TrackGlobalLoudnessFac/Loudness_Factor_sum;
 			sample*=loudness_attn_factor(percent,&arg->Attn,attn_fac_offset_tmpvar+MAX_WAVETAB_LEN);
 			Buffer[i]+=sample;
