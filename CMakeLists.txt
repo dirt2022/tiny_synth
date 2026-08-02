@@ -22,7 +22,7 @@ set(FLOAT_OPTI_CFLAGS
     -fno-approx-func
 )
 
-set_source_files_properties(wave.c
+set_source_files_properties(wave.c math.c
     PROPERTIES
     COMPILE_OPTIONS
         "$<$<NOT:$<CONFIG:Debug>>:${FLOAT_OPTI_CFLAGS}>;$<$<CONFIG:Debug>:-Og>"
