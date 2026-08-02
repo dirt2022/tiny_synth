@@ -91,6 +91,7 @@ void WriteWave(float * Buffer,struct WaveTab * wt,struct WaveArgs * arg,size_t l
 	size_t attn_fac_offset_tmpvar[MAX_WAVETAB_LEN+1]={0};
 	float Loudness_Factor[MAX_WAVETAB_LEN+1]={0};
 	float Loudness_Factor_sum;
+	unsigned int wavetab_tab2tlen_div_2=wt->Tab2TLen/2;
 
 	for(unsigned int i=0,j=0;i < wt->Tab2TLen;i+=2,j++){
 		attn_fac_offset_tmpvar[j]=RangeFArrayLookup( (wt->Attn+j)->Attntab,percent,(wt->Attn+j)->TabLen,4);
@@ -103,10 +104,10 @@ void WriteWave(float * Buffer,struct WaveTab * wt,struct WaveArgs * arg,size_t l
 
 	for(unsigned int i=0;i<arg->pending_len;i++){
 		Loudness_Factor_sum=0.0f;
-		for(unsigned int j=0,k=0;j < wt->Tab2TLen;j+=2,k++){
+		for(unsigned int j=0;j < wavetab_tab2tlen_div_2;j++){
 			percent=(float)(i+arg->wrote_len)/whole_process_len;
-			Loudness_Factor[k]=loudness_attn_factor(percent,wt->Attn+k,attn_fac_offset_tmpvar+k);
-			Loudness_Factor_sum+=Loudness_Factor[k];
+			Loudness_Factor[j]=loudness_attn_factor(percent,wt->Attn+j,attn_fac_offset_tmpvar+j);
+			Loudness_Factor_sum+=Loudness_Factor[j];
 		}
 		for(unsigned int j=0,k=0;j < wt->Tab2TLen;j+=2,k++){
 			sample=sin((float)(i+arg->wrote_len)*backend_rate_backward*2*PI*arg->freq*wt->Tab2T[j] + wt->Tab2T[j+1]);
