@@ -9,8 +9,6 @@
 #include "include/player_dataapi.h"
 #include "include/player_math.h"
 
-static const float backend_rate_backward=1.0f/((float)BACKEND_RATE);
-
 static float loudness_attn_factor(float samplepercent,struct AttnTab * Tab,size_t *offset){
 	float Factor=0;
 	// Tab: 0: Start Percent 1: end percent 2: grad 3: sum Before the range
@@ -74,12 +72,12 @@ void WriteWave(float * Buffer,struct WaveTab * wt,struct WaveArgs * arg,size_t l
 		printf("Hint: Did you forget to use SNAT instruction in the input file?\n");
 		return;
 	}
-	if(wt->Tab2T == NULL || wt->Attn==NULL){
+	if (wt->Tab2T == NULL || wt->Attn==NULL){
 		printf("Illegal WaveTab\n");
 		printf("Hint: Did you forget to use SWAA instruction in the input file?\n");
 		return;
 	}
-	if(wt->Tab2TLen/2 > MAX_WAVETAB_LEN){
+	if (wt->Tab2TLen/2 > MAX_WAVETAB_LEN){
 		printf("Due to the need of calucating relative Loudness to keep envelop not affected by time-based frequency domain functon.\n");
 		printf("using a track that contains more than %d wavetab elements is not allowed\n",MAX_WAVETAB_LEN);
 		return;
@@ -93,7 +91,9 @@ void WriteWave(float * Buffer,struct WaveTab * wt,struct WaveArgs * arg,size_t l
 	float Loudness_Factor_sum;
 	unsigned int wavetab_tab2tlen_div_2=wt->Tab2TLen/2;
 
-	for(unsigned int i=0,j=0;i < wt->Tab2TLen;i+=2,j++){
+	unsigned int phi[MAX_WAVETAB_LEN];
+
+	for (unsigned int i=0,j=0;i < wt->Tab2TLen;i+=2,j++){
 		attn_fac_offset_tmpvar[j]=RangeFArrayLookup( (wt->Attn+j)->Attntab,percent,(wt->Attn+j)->TabLen,4);
 	}
 	attn_fac_offset_tmpvar[MAX_WAVETAB_LEN]=RangeFArrayLookup(arg->Attn.Attntab,percent,arg->Attn.TabLen,4);
@@ -102,15 +102,20 @@ void WriteWave(float * Buffer,struct WaveTab * wt,struct WaveArgs * arg,size_t l
 		goto write_finished_work;
 	}
 
-	for(unsigned int i=0;i<arg->pending_len;i++){
+	for (unsigned int i=0,j=0;i < wavetab_tab2tlen_div_2;i++,j+=2){
+		phi[i]=BACKEND_RATE*(wt->Tab2T[j+1]);
+	}
+
+	for (unsigned int i=0;i<arg->pending_len;i++){
 		Loudness_Factor_sum=0.0f;
-		for(unsigned int j=0;j < wavetab_tab2tlen_div_2;j++){
+		for (unsigned int j=0,k=0;j < wavetab_tab2tlen_div_2;j++,k+=2){
+			// calc loudness factor sum
 			percent=(float)(i+arg->wrote_len)/whole_process_len;
 			Loudness_Factor[j]=loudness_attn_factor(percent,wt->Attn+j,attn_fac_offset_tmpvar+j);
 			Loudness_Factor_sum+=Loudness_Factor[j];
 		}
-		for(unsigned int j=0,k=0;j < wt->Tab2TLen;j+=2,k++){
-			sample=sin((float)(i+arg->wrote_len)*backend_rate_backward*2*PI*arg->freq*wt->Tab2T[j] + wt->Tab2T[j+1]);
+		for (unsigned int j=0,k=0;j < wt->Tab2TLen;j+=2,k++){
+			sample=fastsin((i+arg->wrote_len)*arg->freq*wt->Tab2T[j] + phi[k]);
 			sample*=Loudness_Factor[k];
 			sample*=(Loudness_Factor_sum == 0.0f) ? 0.0f : arg->Loudnessfac*arg->TrackGlobalLoudnessFac/Loudness_Factor_sum;
 			sample*=loudness_attn_factor(percent,&arg->Attn,attn_fac_offset_tmpvar+MAX_WAVETAB_LEN);
