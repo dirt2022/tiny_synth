@@ -4,7 +4,7 @@
 #include "include/player_dataapi.h"
 #include "include/player_memmacro.h"
 
-#define FloatMod(x,y) \
+#define UnsignedFloatMod(x,y) \
 	x-((int)(x/y))*y
 int RangeFArrayLookup(float * array,float num,size_t len,size_t element_num){
 	if (len % element_num != 0 || element_num < 3){
@@ -24,7 +24,7 @@ int LoopFArrayLookup(float * array,float num,size_t len,size_t element_num){
 	}
 	float whole_loopcycle=array[len-element_num+1];
 	for(size_t i=0;i<len;i+=element_num){
-		if(FloatMod(num,whole_loopcycle) >= array[i] && FloatMod(num,whole_loopcycle) <= array[i+1]){
+		if(UnsignedFloatMod(num,whole_loopcycle) >= array[i] && UnsignedFloatMod(num,whole_loopcycle) <= array[i+1]){
 			return i;
 		}
 	}
