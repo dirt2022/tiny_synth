@@ -1,11 +1,12 @@
 #pragma once
-#include <stddef.h>
 
 struct ChainTab {
 	void * data;
 	struct ChainTab * next;
 };
 
+// this isn't suitable for maths operations. but works for tick detect.
+// common implement would be available in player_math.h
 #define UnsignedFloatMod(x,y) \
 	x-((int)(x/y))*y
 
