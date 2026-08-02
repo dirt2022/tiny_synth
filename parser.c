@@ -14,10 +14,6 @@
 #include "include/player_parser.h"
 #include "include/player_note.h"
 
-#ifndef MIN
-#define MIN(x,y) ((x>y)?y:x)
-#endif
-
 #define GETCHAR(fp,x,inttmpvar) \
 	inttmpvar=fgetc(fp); \
 	if (inttmpvar == EOF){ \

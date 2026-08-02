@@ -7,7 +7,7 @@
 #include "include/player_memmacro.h"
 #include "include/player_limit.h"
 #include "include/player_dataapi.h"
-#define PI 3.141592653589793
+#include "include/player_math.h"
 
 static const float backend_rate_backward=1.0f/((float)BACKEND_RATE);
 

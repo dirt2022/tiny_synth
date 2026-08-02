@@ -4,8 +4,6 @@
 #include "include/player_dataapi.h"
 #include "include/player_memmacro.h"
 
-#define UnsignedFloatMod(x,y) \
-	x-((int)(x/y))*y
 int RangeFArrayLookup(float * array,float num,size_t len,size_t element_num){
 	if (len % element_num != 0 || element_num < 3){
 		return 0;
