@@ -4,4 +4,4 @@
 #define MAX_LINELEN 1024
 #define MAX_PARALEN 32
 #define BUFFER_LEN 4096
-#define SINTAB_LEN 2048
+#define SINTAB_LEN 4096
