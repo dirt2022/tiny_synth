@@ -1,3 +1,4 @@
+#pragma once
 #define BACKEND_RATE 44100
 #define MAX_TRACKNUM 64
 #define MAX_WAVETAB_LEN 16
