@@ -17,26 +17,33 @@ include_directories(${PULSEAUDIO_INCLUDE_DIR})
 add_executable(main main.c strapi.c parser.c backend.c wave.c dataapi.c note.c math.c)
 
 if (NOT MSVC)
-set(FLOAT_OPTI_CFLAGS
-    -fbuiltin
-    -ffp-contract=fast
-    -funsafe-math-optimizations
-    -fno-honor-nans
-    -fno-honor-infinities
-    -fno-signed-zeros
-    -fno-trapping-math
-    -fno-rounding-math
-    -fcx-limited-range
-    -fno-math-errno
-    -fno-approx-func
-)
+
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    set(FLOAT_OPTI_CFLAGS
+        -ffast-math
+        -fno-unsafe-math-optimizations
+    )
+else()
+    set(FLOAT_OPTI_CFLAGS
+        -fbuiltin
+        -ffp-contract=fast
+        -funsafe-math-optimizations
+        -fno-honor-nans
+        -fno-honor-infinities
+        -fno-signed-zeros
+        -fno-trapping-math
+        -fno-rounding-math
+        -fcx-limited-range
+        -fno-math-errno
+        -fno-approx-func
+    )
+endif()
 
 set_source_files_properties(wave.c math.c
     PROPERTIES
     COMPILE_OPTIONS
         "$<$<NOT:$<CONFIG:Debug>>:${FLOAT_OPTI_CFLAGS}>;$<$<CONFIG:Debug>:-Og>"
 )
-
 endif()
 
 target_link_libraries(main pulse-simple m)
