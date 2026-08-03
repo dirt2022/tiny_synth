@@ -65,10 +65,10 @@ int parse_note(char * buffer,struct WaveArgs * arg,const struct GlobalStatus * g
 	buffer+=cosumed_len;
 	len-=cosumed_len;
 	while(len > 0 && *buffer != ' '){
-		switch(*buffer){
-			if(space_flag){ //此时已经归位到下一个param,开头不为空格的检查不会触发,故手动退出
-				break;
-			}
+		if(space_flag){ //此时已经归位到下一个param,开头不为空格的检查不会触发,故手动退出
+			break;
+		}
+			switch(*buffer){
 			case 'T':{
 				arg->total_len=atof(buffer+1)/(gs->bpm)*60*BACKEND_RATE;
 				cosumed_len=next_letter_offset(buffer+1,&space_flag)+1; //要跳过字母T本身
