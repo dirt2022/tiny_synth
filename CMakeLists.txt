@@ -1,6 +1,15 @@
 cmake_minimum_required(VERSION 4.2)
 project(MusicPlayer)
 
+option(LTO "Enable Link Time Optimization (LTO/IPO)" OFF)
+
+include(CheckIPOSupported)
+check_ipo_supported(RESULT ipo_supported OUTPUT error)
+
+if(LTO AND ipo_supported)
+    set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+endif()
+
 find_library(PULSEAUDIO_LIBRARY NAMES pulse DOC "PulseAudio Library is required in backend.")
 find_path(PULSEAUDIO_INCLUDE_DIR NAMES pulse/simple.h DOC "PulseAudio head files.")
 include_directories(${PULSEAUDIO_INCLUDE_DIR})
