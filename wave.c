@@ -85,6 +85,7 @@ void WriteWave(float * Buffer,struct WaveTab * wt,struct WaveArgs * arg,size_t l
 	// 用前需memset();
 	float percent=(float)(arg->wrote_len)/(float)whole_process_len;
 	register float sample=0;
+	register float tmpsum;
 
 	size_t attn_fac_offset_tmpvar[MAX_WAVETAB_LEN+1]={0};
 	float Loudness_Factor[MAX_WAVETAB_LEN+1]={0};
@@ -109,6 +110,7 @@ void WriteWave(float * Buffer,struct WaveTab * wt,struct WaveArgs * arg,size_t l
 
 	for (unsigned int i=0;i<arg->pending_len;i++){
 		Loudness_Factor_sum=0.0f;
+		tmpsum=0.0f;
 		for (unsigned int j=0,k=0;j < wavetab_tab2tlen_div_2;j++,k+=2){
 			// calc loudness factor sum
 			Loudness_Factor[j]=loudness_attn_factor(percent,wt->Attn+j,attn_fac_offset_tmpvar+j);
@@ -124,8 +126,9 @@ void WriteWave(float * Buffer,struct WaveTab * wt,struct WaveArgs * arg,size_t l
 			sample*=arg->Loudnessfac*arg->TrackGlobalLoudnessFac;
 			sample=sample/Loudness_Factor_sum;
 			sample*=loudness_attn_factor(percent,&arg->Attn,attn_fac_offset_tmpvar+MAX_WAVETAB_LEN);
-			Buffer[i]+=sample;
+			tmpsum+=sample;
 		}
+		Buffer[i]+=tmpsum;
 		percent+=delta_percent;
 	}
 write_finished_work:
