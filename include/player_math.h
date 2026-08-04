@@ -26,7 +26,7 @@ inline static float fastsin(int x){ // note 1*BACKEND_RATE is considered to be a
 	if (x > BACKEND_RATE_DIV_4){
 		x=BACKEND_RATE_DIV_2-x;
 	}
-	index=(unsigned int)(((float)x)*((float)SINTAB_LEN)/((float)BACKEND_RATE_DIV_4));
+	index=(unsigned int)x*SINTAB_LEN/BACKEND_RATE_DIV_4;
 	return flip? sintab_negv[index]:sintab[index];
 }
 
