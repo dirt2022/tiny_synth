@@ -24,6 +24,11 @@ int main(int argc,char * argv[]){
 	backend_stream_t stream=backend_init(type);
 	sintab_init();
 	FILE * fp=fopen(argv[2],"rb");
+	if (fp == NULL){
+		printf("Unable to open %s\n",argv[2]);
+		return -1;
+	}
 	FileParse(fp,stream);
 	backend_deinit(type,stream);
+	return 0;
 }
