@@ -114,10 +114,15 @@ void WriteWave(float * Buffer,struct WaveTab * wt,struct WaveArgs * arg,size_t l
 			Loudness_Factor[j]=loudness_attn_factor(percent,wt->Attn+j,attn_fac_offset_tmpvar+j);
 			Loudness_Factor_sum+=Loudness_Factor[j];
 		}
+		if (Loudness_Factor_sum == 0.0f){
+			percent+=delta_percent;
+			continue;
+		}
 		for (unsigned int j=0,k=0;j < wt->Tab2TLen;j+=2,k++){
 			sample=fastsin((i+arg->wrote_len)*arg->freq*wt->Tab2T[j] + phi[k]);
 			sample*=Loudness_Factor[k];
-			sample*=(Loudness_Factor_sum == 0.0f) ? 0.0f : arg->Loudnessfac*arg->TrackGlobalLoudnessFac/Loudness_Factor_sum;
+			sample*=arg->Loudnessfac*arg->TrackGlobalLoudnessFac;
+			sample=sample/Loudness_Factor_sum;
 			sample*=loudness_attn_factor(percent,&arg->Attn,attn_fac_offset_tmpvar+MAX_WAVETAB_LEN);
 			Buffer[i]+=sample;
 		}
