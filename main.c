@@ -7,6 +7,9 @@
 #include "include/player_dataapi.h"
 #include "include/player_parser.h"
 #include "include/player_math.h"
+#ifdef _OPENMP
+#include <omp.h>
+#endif
 
 static const char * backendlist[]={
 	"pa","file"
@@ -23,6 +26,10 @@ int main(int argc,char * argv[]){
 	type=strlookup(argv[1],(const char **)backendlist,2);
 	backend_stream_t stream=backend_init(type);
 	sintab_init();
+#ifdef _OPENMP
+	omp_set_num_threads(omp_get_max_threads());
+	printf("Running with multi-thread support, available threads %d.\n",omp_get_max_threads());
+#endif
 	FILE * fp=fopen(argv[2],"rb");
 	if (fp == NULL){
 		printf("Unable to open %s\n",argv[2]);

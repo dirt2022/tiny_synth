@@ -1,20 +1,34 @@
 cmake_minimum_required(VERSION 4.2)
 project(MusicPlayer)
 
+add_executable(main main.c strapi.c parser.c backend.c wave.c dataapi.c note.c math.c)
+
 option(LTO "Enable Link Time Optimization (LTO/IPO)" OFF)
+option(MULTI-THREAD "Enable multithread support. (OpenMP required)" OFF)
 
 include(CheckIPOSupported)
 check_ipo_supported(RESULT ipo_supported OUTPUT error)
 
-if(LTO AND ipo_supported)
-    set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+if(ipo_supported)
+    message(STATUS "Link-Time optimization is supported.")
+    if (LTO)
+        message(STATUS "Link-Time optimization is enabled.")
+        set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+    endif()
+endif()
+
+find_package(OpenMP)
+if(OpenMP_C_FOUND)
+    message(STATUS "Multithread function is supported on current platform.")
+    if(MULTI-THREAD)
+        message(STATUS "Multithread function is enabled.")
+        target_link_libraries(main OpenMP::OpenMP_C)
+    endif()
 endif()
 
 find_library(PULSEAUDIO_LIBRARY NAMES pulse DOC "PulseAudio Library is required in backend.")
 find_path(PULSEAUDIO_INCLUDE_DIR NAMES pulse/simple.h DOC "PulseAudio head files.")
 include_directories(${PULSEAUDIO_INCLUDE_DIR})
-
-add_executable(main main.c strapi.c parser.c backend.c wave.c dataapi.c note.c math.c)
 
 if (NOT MSVC)
 
