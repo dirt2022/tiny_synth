@@ -12,12 +12,28 @@
 static float loudness_attn_factor(float samplepercent,struct AttnTab * Tab,size_t *offset){
 	float Factor=0;
 	// Tab: 0: Start Percent 1: end percent 2: grad 3: sum Before the range
-	if (samplepercent > Tab ->Attntab[*offset+1] ){
-		*offset+=4;
-	}
 	Factor=Tab->Attntab[*offset+3]+(samplepercent-Tab->Attntab[*offset])*Tab->Attntab[*offset+2];
 	return Factor;
 }
+
+static unsigned int sample_end_percent_value(size_t whole_process_len,
+					struct AttnTab * Tab,size_t * offset,size_t wrote_len){
+	return (Tab->Attntab[*offset+1]) * whole_process_len;
+}
+
+#define UPDATE_OFFSET_CHECK(sample_loop_counter,attn_fac_index,attnsrc) \
+	if (Loudness_Offset_Add4_sample_phase[attn_fac_index] < sample_loop_counter+arg->wrote_len){ \
+	attn_fac_offset_tmpvar[attn_fac_index]+=4; \
+	Loudness_Offset_Add4_sample_phase[attn_fac_index]=sample_end_percent_value(whole_process_len,attnsrc+attn_fac_index, \
+			attn_fac_offset_tmpvar+attn_fac_index,arg->wrote_len); \
+	}
+
+#define UPDATE_OFFSET_CHECK_ENVELOP(sample_loop_counter,attn_fac_index,attnsrc) \
+	if (Loudness_Offset_Add4_sample_phase[attn_fac_index] < sample_loop_counter+arg->wrote_len){ \
+		attn_fac_offset_tmpvar[attn_fac_index]+=4; \
+		Loudness_Offset_Add4_sample_phase[attn_fac_index]=sample_end_percent_value(whole_process_len,attnsrc, \
+			attn_fac_offset_tmpvar+attn_fac_index,arg->wrote_len); \
+	}
 
 void CalcLoudnessAttnTab(struct AttnTab * Tab){
 	void * tmpptr;
@@ -83,12 +99,14 @@ void WriteWave(float * Buffer,struct WaveTab * wt,struct WaveArgs * arg,size_t l
 		return;
 	}
 	// 用前需memset();
+
 	float percent=(float)(arg->wrote_len)/(float)whole_process_len;
 	register float sample=0;
 	register float tmpsum;
 
 	size_t attn_fac_offset_tmpvar[MAX_WAVETAB_LEN+1]={0};
 	float Loudness_Factor[MAX_WAVETAB_LEN+1]={0};
+	unsigned int Loudness_Offset_Add4_sample_phase[MAX_WAVETAB_LEN+1]={0};
 	float Loudness_Factor_sum;
 	unsigned int wavetab_tab2tlen_div_2=wt->Tab2TLen/2;
 
@@ -99,6 +117,8 @@ void WriteWave(float * Buffer,struct WaveTab * wt,struct WaveArgs * arg,size_t l
 		attn_fac_offset_tmpvar[j]=RangeFArrayLookup( (wt->Attn+j)->Attntab,percent,(wt->Attn+j)->TabLen,4);
 	}
 	attn_fac_offset_tmpvar[MAX_WAVETAB_LEN]=RangeFArrayLookup(arg->Attn.Attntab,percent,arg->Attn.TabLen,4);
+	Loudness_Offset_Add4_sample_phase[MAX_WAVETAB_LEN]=sample_end_percent_value(whole_process_len
+		,&arg->Attn,attn_fac_offset_tmpvar+MAX_WAVETAB_LEN,arg->wrote_len);
 
 	if (arg->freq == 0.0f){
 		goto write_finished_work;
@@ -106,6 +126,7 @@ void WriteWave(float * Buffer,struct WaveTab * wt,struct WaveArgs * arg,size_t l
 
 	for (unsigned int i=0,j=0;i < wavetab_tab2tlen_div_2;i++,j+=2){
 		phi[i]=BACKEND_RATE*(wt->Tab2T[j+1]);
+		Loudness_Offset_Add4_sample_phase[i]=sample_end_percent_value(whole_process_len,wt->Attn+i,attn_fac_offset_tmpvar+i,arg->wrote_len);
 	}
 
 	for (unsigned int i=0;i<arg->pending_len;i++){
@@ -113,6 +134,7 @@ void WriteWave(float * Buffer,struct WaveTab * wt,struct WaveArgs * arg,size_t l
 		tmpsum=0.0f;
 		for (unsigned int j=0,k=0;j < wavetab_tab2tlen_div_2;j++,k+=2){
 			// calc loudness factor sum
+			UPDATE_OFFSET_CHECK(i,j,wt->Attn);
 			Loudness_Factor[j]=loudness_attn_factor(percent,wt->Attn+j,attn_fac_offset_tmpvar+j);
 			Loudness_Factor_sum+=Loudness_Factor[j];
 		}
@@ -125,6 +147,7 @@ void WriteWave(float * Buffer,struct WaveTab * wt,struct WaveArgs * arg,size_t l
 			sample*=Loudness_Factor[k];
 			sample*=arg->Loudnessfac*arg->TrackGlobalLoudnessFac;
 			sample=sample/Loudness_Factor_sum;
+			UPDATE_OFFSET_CHECK_ENVELOP(i,MAX_WAVETAB_LEN,&arg->Attn);
 			sample*=loudness_attn_factor(percent,&arg->Attn,attn_fac_offset_tmpvar+MAX_WAVETAB_LEN);
 			tmpsum+=sample;
 		}
