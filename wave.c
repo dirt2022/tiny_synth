@@ -39,6 +39,10 @@ static unsigned int sample_end_percent_value(const size_t whole_process_len,
 			attn_fac_offset_tmpvar+attn_fac_index,wrote_len); \
 	}
 
+static float delta_percent;
+static unsigned int phi[MAX_WAVETAB_LEN];
+static unsigned int wavetab_tab2tlen_div_2;
+
 void CalcLoudnessAttnTab(struct AttnTab * Tab){
 	void * tmpptr;
 	float StartPercent=0;
@@ -93,10 +97,6 @@ static void WriteWave_Worker(float * Buffer,const struct WaveTab * wt,const stru
 	float Loudness_Factor[MAX_WAVETAB_LEN+1]={0};
 	unsigned int Loudness_Offset_Add4_sample_phase[MAX_WAVETAB_LEN+1]={0};
 	float Loudness_Factor_sum;
-	unsigned int wavetab_tab2tlen_div_2=wt->Tab2TLen/2;
-
-	unsigned int phi[MAX_WAVETAB_LEN];
-	float delta_percent=1.0f/(float)whole_process_len;
 
 	for (unsigned int i=0,j=0;i < wt->Tab2TLen;i+=2,j++){
 		attn_fac_offset_tmpvar[j]=RangeFArrayLookup( (wt->Attn+j)->Attntab,percent,(wt->Attn+j)->TabLen,4);
@@ -105,15 +105,14 @@ static void WriteWave_Worker(float * Buffer,const struct WaveTab * wt,const stru
 	Loudness_Offset_Add4_sample_phase[MAX_WAVETAB_LEN]=sample_end_percent_value(whole_process_len
 		,&arg->Attn,attn_fac_offset_tmpvar+MAX_WAVETAB_LEN,wrote_len);
 
-	for (unsigned int i=0,j=0;i < wavetab_tab2tlen_div_2;i++,j+=2){
-		phi[i]=BACKEND_RATE*(wt->Tab2T[j+1]);
+	for (unsigned int i=0;i < wavetab_tab2tlen_div_2;i++){
 		Loudness_Offset_Add4_sample_phase[i]=sample_end_percent_value(whole_process_len,wt->Attn+i,attn_fac_offset_tmpvar+i,wrote_len);
 	}
 
 	for (unsigned int i=0;i<pending_len;i++){
 		Loudness_Factor_sum=0.0f;
 		tmpsum=0.0f;
-		for (unsigned int j=0,k=0;j < wavetab_tab2tlen_div_2;j++,k+=2){
+		for (unsigned int j=0;j < wavetab_tab2tlen_div_2;j++){
 			// calc loudness factor sum
 			UPDATE_OFFSET_CHECK(i,j,wt->Attn);
 			Loudness_Factor[j]=loudness_attn_factor(percent,wt->Attn+j,attn_fac_offset_tmpvar+j);
@@ -160,6 +159,13 @@ void WriteWave(float * Buffer,struct WaveTab * wt,struct WaveArgs * arg,size_t l
 	if (arg->freq == 0.0f){
 		goto write_finished_work;
 	}
+
+// init these thread shared vars
+	wavetab_tab2tlen_div_2=wt->Tab2TLen/2;
+	for (unsigned int i=0,j=0;i < wavetab_tab2tlen_div_2;i++,j+=2){
+		phi[i]=BACKEND_RATE*(wt->Tab2T[j+1]);
+	}
+	delta_percent=1.0f/(float)arg->total_len;
 #ifdef _OPENMP
 
 	unsigned int thread_num;
