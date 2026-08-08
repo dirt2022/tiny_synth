@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2026 dirt2022
+ *
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
 #define SAFE_MALLOC_DEF(ptr,size) \
 	ptr=malloc(size); \
 	if (ptr == NULL){ \

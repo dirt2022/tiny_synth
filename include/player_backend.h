@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2026 dirt2022
+ *
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
 enum backend_type {
 	PulseAudio=0,
 	File=1

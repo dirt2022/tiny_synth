@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2026 dirt2022
+ *
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
 #pragma once
 #define BACKEND_RATE 44100
 #define MAX_TRACKNUM 64

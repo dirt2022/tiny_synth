@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2026 dirt2022
+ *
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
 #include <math.h>
 #include <stdlib.h>
 #include "include/player_backend.h"
