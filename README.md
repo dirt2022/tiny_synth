@@ -12,7 +12,7 @@ A streaming FM synthesizer written in C. Parses `.rdi` script files and renders 
 
 ```bash
 mkdir build && cd build
-cmake ..
+cmake .. -DMULTI-THREAD=1 -DLTO=1
 make
 ```
 
