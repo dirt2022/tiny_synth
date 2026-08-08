@@ -14,7 +14,7 @@
 #include "include/player_limit.h"
 
 #define SWAP32BIT(x) \
-	x=( ((unsigned int)x)<<16)|( ((unsigned int)x)>>16)
+	x=(((unsigned int)x)<<24)|((((unsigned int)x)<<8)&0x00ff0000)|((((unsigned int)x)>>8)&0x0000ff00)|(((unsigned int)x)>>24)
 
 // Note: All backends uses signed float32 (little endian). which is not limit.
 static union {
