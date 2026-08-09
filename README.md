@@ -5,8 +5,8 @@ SPDX-License-Identifier: CC0-1.0
 -->
 
 # FM Synthesizer
-
-A streaming FM synthesizer written in C. Parses `.rdi` script files and renders audio in real-time.
+Just a toy. Don't take it seriously.
+A streaming FM synthesizer written in C. Parses `.rdi` script files and renders audio.
 
 ## Build
 
