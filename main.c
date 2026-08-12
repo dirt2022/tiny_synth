@@ -30,6 +30,10 @@ int main(int argc,char * argv[]){
 
 	enum backend_type type=PulseAudio;
 	type=strlookup(argv[1],(const char **)backendlist,2);
+	if (type == -1){
+		printf("Illegal backend.\n");
+		return -1;
+	}
 	backend_stream_t stream=backend_init(type);
 	sintab_init();
 #ifdef _OPENMP
