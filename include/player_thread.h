@@ -8,10 +8,10 @@
 #define THREAD_WEIGHT_SUM 1000
 #define THREAD_OFFLOAD_MIN_THRESHOLD 256
 extern unsigned int thread_num;
-extern struct timespec * thread_speedtab;
-extern unsigned short * thread_weight;
-extern unsigned int * thread_pendinglen;
-extern unsigned int * thread_wrote_offset;
+extern struct timespec* thread_speedtab;
+extern unsigned short* thread_weight;
+extern unsigned int* thread_pendinglen;
+extern unsigned int* thread_wrote_offset;
 void Calc_Weight(void);
 void Init_LoadbalanceTab(void);
 void DeInit_LoadbalanceTab(void);

@@ -17,6 +17,6 @@ struct GlobalStatus {
 };
 
 struct Input {
-	DIH_chaintab_t * line;	
+	DIH_chaintab_t* line;
 };
-void FileParse(FILE * fp,backend_stream_t s);
+void FileParse(FILE* fp, backend_stream_t s);

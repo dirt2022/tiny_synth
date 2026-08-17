@@ -20,295 +20,303 @@
 #include "include/player_parser.h"
 #include "include/player_note.h"
 
-#define GETCHAR(fp,x,inttmpvar) \
-	inttmpvar=fgetc(fp); \
-	if (inttmpvar == EOF){ \
-		printf("Unexcepted EOF"); \
-		abort(); \
-	} \
-	x=inttmpvar;
+#define GETCHAR(fp, x, inttmpvar)                                                                                      \
+	inttmpvar = fgetc(fp);                                                                                         \
+	if (inttmpvar == EOF) {                                                                                        \
+		printf("Unexcepted EOF");                                                                              \
+		abort();                                                                                               \
+	}                                                                                                              \
+	x = inttmpvar;
 
-#define GETCHAR_NINT(fp,x) \
-	x=fgetc(fp); \
-	if (x == EOF){ \
-		printf("Unexcepted EOF"); \
-		abort(); \
+#define GETCHAR_NINT(fp, x)                                                                                            \
+	x = fgetc(fp);                                                                                                 \
+	if (x == EOF) {                                                                                                \
+		printf("Unexcepted EOF");                                                                              \
+		abort();                                                                                               \
 	}
 
-struct GlobalStatus gs={0};
-struct LoudnessLoopTab llpt={0};
-struct WaveTab wt[MAX_TRACKNUM]={0};
-struct WaveArgs args[MAX_TRACKNUM]={0};
-struct Input ipt[MAX_TRACKNUM]={0};
+struct GlobalStatus gs = {0};
+struct LoudnessLoopTab llpt = {0};
+struct WaveTab wt[MAX_TRACKNUM] = {0};
+struct WaveArgs args[MAX_TRACKNUM] = {0};
+struct Input ipt[MAX_TRACKNUM] = {0};
 
-float buffer[BUFFER_LEN]={0};
+float buffer[BUFFER_LEN] = {0};
 // 音频输出缓冲区
 
-static const char * Keywords[]={
-	"SBPM","STRN","SLLP","SWAA","DATA","STGL","SNAT"
-// set bpm, set track num, set loudness loop
-// set wave tab and attn factor ,"data section start","set track global loudness"
-// set attn table for a single note (envelop)
-// While '!' marks the end of a track.
+static const char* Keywords[] = {
+    "SBPM", "STRN", "SLLP", "SWAA",
+    "DATA", "STGL", "SNAT"
+    // set bpm, set track num, set loudness loop
+    // set wave tab and attn factor ,"data section start","set track global loudness"
+    // set attn table for a single note (envelop)
+    // While '!' marks the end of a track.
 };
 
 // Usage: "SBPM 60.0" "SETR 1" "SLLP 0.0 2.0 0.5 2.0 3.0 0.6... start stop factor"
-static int CosumeTrack(FILE * fp,backend_stream_t s){
-	memset(buffer,0,sizeof(float)*BUFFER_LEN);
-	char fbuffer[MAX_LINELEN]={0};
+static int CosumeTrack(FILE* fp, backend_stream_t s) {
+	memset(buffer, 0, sizeof(float) * BUFFER_LEN);
+	char fbuffer[MAX_LINELEN] = {0};
 
-	int tmpvar=0;
-	int writeflag=1;
-	int skipcnt=0;
+	int tmpvar = 0;
+	int writeflag = 1;
+	int skipcnt = 0;
 
-	size_t len_min=BUFFER_LEN;
-	int backend_write_ret=0;
-	for(unsigned int i=0; i<gs.tracknum; i++){
-		if( args[i].wrote_len != (unsigned int)(args[i].total_len) ){
-			len_min=MIN(len_min,(args[i].total_len-args[i].wrote_len));
+	size_t len_min = BUFFER_LEN;
+	int backend_write_ret = 0;
+	for (unsigned int i = 0; i < gs.tracknum; i++) {
+		if (args[i].wrote_len != (unsigned int)(args[i].total_len)) {
+			len_min = MIN(len_min, (args[i].total_len - args[i].wrote_len));
 		} else {
-			if(gs.SectionInputEnd == 1){
+			if (gs.SectionInputEnd == 1) {
 				skipcnt++;
-				args[i].skipflag=1;
+				args[i].skipflag = 1;
 				continue;
 			}
-			args[i].skipflag=0;
-			fseek(fp,*(int *)(ipt[i].line->data),SEEK_SET);
-			for(unsigned int j=0;j < MAX_LINELEN;j++){
-				GETCHAR(fp,fbuffer[j],tmpvar);
-				if(fbuffer[j] == '\n'){ // only support unix style file.
-					fbuffer[j]=0;
-					ipt[i].line=ChainTabHeadCosume(ipt[i].line);
-					writeflag=0;
+			args[i].skipflag = 0;
+			fseek(fp, *(int*)(ipt[i].line->data), SEEK_SET);
+			for (unsigned int j = 0; j < MAX_LINELEN; j++) {
+				GETCHAR(fp, fbuffer[j], tmpvar);
+				if (fbuffer[j] == '\n') { // only support unix style file.
+					fbuffer[j] = 0;
+					ipt[i].line = ChainTabHeadCosume(ipt[i].line);
+					writeflag = 0;
 					break;
 				}
-				if(fbuffer[j] == ' '){
+				if (fbuffer[j] == ' ') {
 					// 移除这个行	来保证 对空格判断无误, 且parse_note已经能够处理空格
 					break;
 				}
 			}
 
-			if(writeflag == 1){
-				*(int *)(ipt[i].line->data)+=parse_note(fbuffer,args+i,&gs,&llpt,gs.ticks,MAX_LINELEN);
+			if (writeflag == 1) {
+				*(int*)(ipt[i].line->data) +=
+				    parse_note(fbuffer, args + i, &gs, &llpt, gs.ticks, MAX_LINELEN);
 			} else {
-				parse_note(fbuffer,args+i,&gs,&llpt,gs.ticks,MAX_LINELEN);
+				parse_note(fbuffer, args + i, &gs, &llpt, gs.ticks, MAX_LINELEN);
 			}
 
-			if(len_min > args[i].total_len){
-				len_min=args[i].total_len;
+			if (len_min > args[i].total_len) {
+				len_min = args[i].total_len;
 			}
 		}
 	}
-	if(skipcnt == gs.tracknum){
+	if (skipcnt == gs.tracknum) {
 		return 1;
 	}
-	gs.ticks+=(float)len_min/60*gs.bpm/BACKEND_RATE;
-	for(unsigned int i=0; i<gs.tracknum; i++){
-		if(args[i].skipflag == 1){
+	gs.ticks += (float)len_min / 60 * gs.bpm / BACKEND_RATE;
+	for (unsigned int i = 0; i < gs.tracknum; i++) {
+		if (args[i].skipflag == 1) {
 			continue;
 		}
-		args[i].pending_len=len_min;
-		WriteWave(buffer,wt+i,args+i,BUFFER_LEN);
+		args[i].pending_len = len_min;
+		WriteWave(buffer, wt + i, args + i, BUFFER_LEN);
 	}
-	backend_write_ret=BackendWrite(s,buffer,len_min*sizeof(float));
-	if (backend_write_ret != len_min*sizeof(float)){
+	backend_write_ret = BackendWrite(s, buffer, len_min * sizeof(float));
+	if (backend_write_ret != len_min * sizeof(float)) {
 		printf("Failed to write buffer!\n");
 		abort();
 	}
 	return 0;
 }
 
-static void SeekTrack(FILE * fp,int tracknum){
-	if(gs.SectionInputEnd == 0){
-		fseek(fp,gs.search_offset,SEEK_SET);
+static void SeekTrack(FILE* fp, int tracknum) {
+	if (gs.SectionInputEnd == 0) {
+		fseek(fp, gs.search_offset, SEEK_SET);
 	} else {
 		return;
 	}
-	int ch=0;
-	int found_tracknum=0;
-	int * data_payload=NULL;
-	char fbuffer[MAX_LINELEN]={0};
-	int offset=0;
+	int ch = 0;
+	int found_tracknum = 0;
+	int* data_payload = NULL;
+	char fbuffer[MAX_LINELEN] = {0};
+	int offset = 0;
 
-	for(unsigned int i=0; i< gs.tracknum; i++){
-		start:
-		if(ipt[i].line == NULL||ipt[i].line->data == NULL){ //音轨间必须紧密书写, @ 0 ... 下一行就得是 @ 1 .....
-			GETCHAR_NINT(fp,ch);
-			if(ch == '@'){
-				offset=myfgets(fbuffer,MAX_LINELEN,fp);
-				SAFE_MALLOC_DEF(data_payload,sizeof(int));
-				*data_payload=ftell(fp)-offset+1+next_space_offset(fbuffer+1); // 空格存在偏移,且要跳过一个数字param
-				found_tracknum=atoi(fbuffer+1);
-				ChainTabAppend(&ipt[found_tracknum].line,data_payload);
-				if (found_tracknum == tracknum){
-					gs.search_offset=ftell(fp);
+	for (unsigned int i = 0; i < gs.tracknum; i++) {
+	start:
+		if (ipt[i].line == NULL ||
+		    ipt[i].line->data == NULL) { // 音轨间必须紧密书写, @ 0 ... 下一行就得是 @ 1 .....
+			GETCHAR_NINT(fp, ch);
+			if (ch == '@') {
+				offset = myfgets(fbuffer, MAX_LINELEN, fp);
+				SAFE_MALLOC_DEF(data_payload, sizeof(int));
+				*data_payload = ftell(fp) - offset + 1 +
+						next_space_offset(fbuffer + 1); // 空格存在偏移,且要跳过一个数字param
+				found_tracknum = atoi(fbuffer + 1);
+				ChainTabAppend(&ipt[found_tracknum].line, data_payload);
+				if (found_tracknum == tracknum) {
+					gs.search_offset = ftell(fp);
 					break;
 				}
 				continue;
 			}
 			if (ch == '#') {
-				while(ch!='\n'){
-					GETCHAR_NINT(fp,ch);
+				while (ch != '\n') {
+					GETCHAR_NINT(fp, ch);
 				}
 				goto start;
 			}
 			if (ch == '!') { // End entered.
-				gs.SectionInputEnd=1;
-				ch=fgetc(fp);
-				if (ch != '\n' && ch != EOF){
+				gs.SectionInputEnd = 1;
+				ch = fgetc(fp);
+				if (ch != '\n' && ch != EOF) {
 					printf("Fatal: There isn't a \\n right after the end mark\n");
 					abort();
 				}
 				break;
-			}	
+			}
 		}
 	}
 }
 
-static void InitPlayerWithCleanUp(void){
-	gs.SectionInputEnd=0;
-	for(unsigned int i=0;i < MAX_TRACKNUM; i++){
-		if (ipt[i].line != NULL){
+static void InitPlayerWithCleanUp(void) {
+	gs.SectionInputEnd = 0;
+	for (unsigned int i = 0; i < MAX_TRACKNUM; i++) {
+		if (ipt[i].line != NULL) {
 			ChainTabDestory(ipt[i].line);
 		}
 	}
-	memset(ipt,0,sizeof(ipt));
-	for(unsigned int i=0;i < MAX_TRACKNUM; i++){
-		ipt[i].line=ChainTabCreate();
+	memset(ipt, 0, sizeof(ipt));
+	for (unsigned int i = 0; i < MAX_TRACKNUM; i++) {
+		ipt[i].line = ChainTabCreate();
 	}
 }
 
-void PlayerMain(FILE * fp,backend_stream_t s){ // 此处必在一行之首
-	int res=0;
+void PlayerMain(FILE* fp, backend_stream_t s) { // 此处必在一行之首
+	int res = 0;
 	InitPlayerWithCleanUp();
-	gs.search_offset=ftell(fp);
-	for(;;){
-		for(unsigned int i=0;i<gs.tracknum;i++){
-			SeekTrack(fp,i);
+	gs.search_offset = ftell(fp);
+	for (;;) {
+		for (unsigned int i = 0; i < gs.tracknum; i++) {
+			SeekTrack(fp, i);
 		}
-		res=CosumeTrack(fp,s);
-		if(res==1){
+		res = CosumeTrack(fp, s);
+		if (res == 1) {
 			return;
 		}
 	}
 }
-static void ParserDeinit(void){
-	for(unsigned int i=0;i < MAX_TRACKNUM;i++){
-		if (ipt[i].line != NULL){
+static void ParserDeinit(void) {
+	for (unsigned int i = 0; i < MAX_TRACKNUM; i++) {
+		if (ipt[i].line != NULL) {
 			ChainTabDestory(ipt[i].line);
 		}
-		if (wt[i].Tab2T != NULL){
+		if (wt[i].Tab2T != NULL) {
 			SAFE_FREE(wt[i].Tab2T);
 		}
-		if (wt[i].Attn != NULL){
-			for (unsigned int j=0;j<wt[i].Tab2TLen/2;j++){
-				if(wt[i].Attn[j].Tab2T != NULL){
+		if (wt[i].Attn != NULL) {
+			for (unsigned int j = 0; j < wt[i].Tab2TLen / 2; j++) {
+				if (wt[i].Attn[j].Tab2T != NULL) {
 					SAFE_FREE(wt[i].Attn[j].Tab2T);
 				}
-				if(wt[i].Attn[j].Attntab != NULL){
+				if (wt[i].Attn[j].Attntab != NULL) {
 					SAFE_FREE(wt[i].Attn[j].Attntab);
 				}
 			}
 			SAFE_FREE(wt[i].Attn);
 		}
-		if (llpt.Tab != NULL){
+		if (llpt.Tab != NULL) {
 			SAFE_FREE(llpt.Tab);
 		}
 	}
 }
-void FileParse(FILE * fp,backend_stream_t s){
-	void * tmpptr=NULL;
-	unsigned int index=0;
-	char fbuffer[MAX_LINELEN]={0};
-	int firstparam=0;
-	size_t tablen_tmpvar=0;
-	int read_len=0;
+void FileParse(FILE* fp, backend_stream_t s) {
+	void* tmpptr = NULL;
+	unsigned int index = 0;
+	char fbuffer[MAX_LINELEN] = {0};
+	int firstparam = 0;
+	size_t tablen_tmpvar = 0;
+	int read_len = 0;
 
-	for(;;){
-		if (feof(fp) != 0){
+	for (;;) {
+		if (feof(fp) != 0) {
 			ParserDeinit();
 			return;
 		}
-		read_len=myfgets(fbuffer,MAX_LINELEN,fp);
-		if (read_len == 0){ // 先前没有读取失败,现在遇到eof了
+		read_len = myfgets(fbuffer, MAX_LINELEN, fp);
+		if (read_len == 0) { // 先前没有读取失败,现在遇到eof了
 			ParserDeinit();
 			return;
 		}
-		printf("string %s\n",fbuffer);
-		index=strlookup(fbuffer,Keywords,7);
-		switch (index){
-			case 0:{
-				printf("Setting bpm...\n");
-				gs.bpm=atof(fbuffer+5);
-				break;
+		printf("string %s\n", fbuffer);
+		index = strlookup(fbuffer, Keywords, 7);
+		switch (index) {
+		case 0: {
+			printf("Setting bpm...\n");
+			gs.bpm = atof(fbuffer + 5);
+			break;
+		}
+		case 1: {
+			printf("Setting tracknum...\n");
+			gs.tracknum = atoi(fbuffer + 5);
+			break;
+		}
+		case 2: {
+			printf("Setting loudness loop tab...\n");
+			if (llpt.Tab != NULL) {
+				SAFE_FREE(llpt.Tab);
 			}
-			case 1:{
-				printf("Setting tracknum...\n");
-				gs.tracknum=atoi(fbuffer+5);
-				break;
-			}
-			case 2:{
-				printf("Setting loudness loop tab...\n");
-				if (llpt.Tab != NULL){
-					SAFE_FREE(llpt.Tab);
+			llpt.Tab = str2farray(fbuffer + 5, &(llpt.Len));
+			break;
+		}
+		case 3: { // wt, (\n) factor table, (\n)
+			printf("Setting loudness tab and wave tab...\n");
+			for (unsigned int i = 0; i < gs.tracknum; i++) {
+				myfgets(fbuffer, MAX_LINELEN, fp);
+				if (wt[i].Tab2T != NULL) {
+					SAFE_FREE(wt[i].Tab2T);
 				}
-				llpt.Tab=str2farray(fbuffer+5,&(llpt.Len));
-				break;
-			}
-			case 3:{ // wt, (\n) factor table, (\n)
-				printf("Setting loudness tab and wave tab...\n");
-				for(unsigned int i=0;i<gs.tracknum;i++){
-					myfgets(fbuffer,MAX_LINELEN,fp);
-					if (wt[i].Tab2T != NULL){
-						SAFE_FREE(wt[i].Tab2T);
+				wt[i].Tab2T = str2farray(fbuffer, &tablen_tmpvar);
+				if (wt[i].Attn != NULL) {
+					for (unsigned int j = 0; j < wt[i].Tab2TLen / 2; j++) {
+						SAFE_FREE(wt[i].Attn[j].Attntab);
+						SAFE_FREE(wt[i].Attn[j].Tab2T);
 					}
-					wt[i].Tab2T=str2farray(fbuffer,&tablen_tmpvar);
-					if (wt[i].Attn != NULL){
-						for(unsigned int j=0;j<wt[i].Tab2TLen/2;j++){
-							SAFE_FREE(wt[i].Attn[j].Attntab);
-							SAFE_FREE(wt[i].Attn[j].Tab2T);
-						}
-						SAFE_REALLOC_DEF(wt[i].Attn,sizeof(struct AttnTab)*tablen_tmpvar/2,tmpptr);
-					} else {
-						SAFE_MALLOC_DEF(wt[i].Attn,sizeof(struct AttnTab)*tablen_tmpvar/2);
-					}
-					wt[i].Tab2TLen=tablen_tmpvar;
-					for(unsigned int j=0;j<wt[i].Tab2TLen/2;j++){
-						wt[i].Attn[j].TabLen=0;
-					}
-					for(unsigned int j=0;j<wt[i].Tab2TLen/2;j++){
-						myfgets(fbuffer,MAX_LINELEN,fp);
-						wt[i].Attn[j].Tab2T=str2farray(fbuffer,&wt[i].Attn[j].Tab2TLen);
-						CalcLoudnessAttnTab(wt[i].Attn+j);
-					}
+					SAFE_REALLOC_DEF(wt[i].Attn, sizeof(struct AttnTab) * tablen_tmpvar / 2,
+							 tmpptr);
+				} else {
+					SAFE_MALLOC_DEF(wt[i].Attn, sizeof(struct AttnTab) * tablen_tmpvar / 2);
 				}
-				break;
-			}
-			case 4:{
-				PlayerMain(fp,s);
-				break;
-			}
-			case 5:{
-				printf("Setting TrackFactor\n");
-				args[atoi(fbuffer+5)].TrackGlobalLoudnessFac=atof(fbuffer+5+next_letter_offset(fbuffer+5,NULL));
-				printf("Set %f\n",args[atoi(fbuffer+5)].TrackGlobalLoudnessFac);
-				break;
-			}
-			case 6:{
-				printf("Setting envelop\n");
-				firstparam=atoi(fbuffer+5);
-				if (args[firstparam].Attn.Tab2T != NULL){
-					SAFE_FREE(args[firstparam].Attn.Tab2T);
+				wt[i].Tab2TLen = tablen_tmpvar;
+				for (unsigned int j = 0; j < wt[i].Tab2TLen / 2; j++) {
+					wt[i].Attn[j].TabLen = 0;
 				}
-				args[firstparam].Attn.Tab2T=str2farray(fbuffer+5+next_space_offset(fbuffer+5) // 格式是: 先写音轨号,在写包络点
-				,&args[firstparam].Attn.Tab2TLen);
-				CalcLoudnessAttnTab(&args[firstparam].Attn);
-				break;
+				for (unsigned int j = 0; j < wt[i].Tab2TLen / 2; j++) {
+					myfgets(fbuffer, MAX_LINELEN, fp);
+					wt[i].Attn[j].Tab2T = str2farray(fbuffer, &wt[i].Attn[j].Tab2TLen);
+					CalcLoudnessAttnTab(wt[i].Attn + j);
+				}
 			}
-			default:{
-				ParserDeinit();
-				return;
+			break;
+		}
+		case 4: {
+			PlayerMain(fp, s);
+			break;
+		}
+		case 5: {
+			printf("Setting TrackFactor\n");
+			args[atoi(fbuffer + 5)].TrackGlobalLoudnessFac =
+			    atof(fbuffer + 5 + next_letter_offset(fbuffer + 5, NULL));
+			printf("Set %f\n", args[atoi(fbuffer + 5)].TrackGlobalLoudnessFac);
+			break;
+		}
+		case 6: {
+			printf("Setting envelop\n");
+			firstparam = atoi(fbuffer + 5);
+			if (args[firstparam].Attn.Tab2T != NULL) {
+				SAFE_FREE(args[firstparam].Attn.Tab2T);
 			}
+			args[firstparam].Attn.Tab2T =
+			    str2farray(fbuffer + 5 + next_space_offset(fbuffer + 5) // 格式是: 先写音轨号,在写包络点
+				       ,
+				       &args[firstparam].Attn.Tab2TLen);
+			CalcLoudnessAttnTab(&args[firstparam].Attn);
+			break;
+		}
+		default: {
+			ParserDeinit();
+			return;
+		}
 		}
 	}
 }

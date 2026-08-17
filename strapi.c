@@ -11,55 +11,60 @@
 #include <string.h>
 // 注: next_*_offset 函数 是 找下一个block的偏移,故字符 str[next_space_offset(str)],并不是空格,而是下一个block的起始字符
 // this module defines args parser functions.
-static int halfcmp(const char *s1, const char *s2, char end) {
-    // if end == '\0', please use strcmp for better performance.
-    // s1 should be longer than s2.
-    if (strlen(s1) < strlen(s2)) {
-        const char *tmp;
-        tmp = s1;
-        s1 = s2;
-        s2 = tmp;
-    }
-    for (;;) {
-        if ((*s1 == end || *s1 == '\0') && *s2 == '\0') {
-            return 1;
-        }
-        if (*s1 != *s2) {
-            return 0;
-        }
-        s1++;
-        s2++;
-    }
+static int halfcmp(const char* s1, const char* s2, char end) {
+	// if end == '\0', please use strcmp for better performance.
+	// s1 should be longer than s2.
+	if (strlen(s1) < strlen(s2)) {
+		const char* tmp;
+		tmp = s1;
+		s1 = s2;
+		s2 = tmp;
+	}
+	for (;;) {
+		if ((*s1 == end || *s1 == '\0') && *s2 == '\0') {
+			return 1;
+		}
+		if (*s1 != *s2) {
+			return 0;
+		}
+		s1++;
+		s2++;
+	}
 }
 
-unsigned int next_space_offset(const char * str){
-	unsigned int offset=0;
-	for(;;){
-		if(str[offset]==0){
+unsigned int next_space_offset(const char* str) {
+	unsigned int offset = 0;
+	for (;;) {
+		if (str[offset] == 0) {
 			return offset;
 		}
-		if (str[offset]==' '){
-			return offset+1;
+		if (str[offset] == ' ') {
+			return offset + 1;
 		}
 		offset++;
 	}
 	return 0;
 }
 
-unsigned int next_letter_offset(const char * str,int * is_space_detected){
-	unsigned int offset=0;
-	for(;;){
-		if(str[offset] == 0){
-			if(is_space_detected != NULL){*is_space_detected=0;}
+unsigned int next_letter_offset(const char* str, int* is_space_detected) {
+	unsigned int offset = 0;
+	for (;;) {
+		if (str[offset] == 0) {
+			if (is_space_detected != NULL) {
+				*is_space_detected = 0;
+			}
 			return offset;
 		}
-		if(str[offset] == ' '){
-			if(is_space_detected != NULL){*is_space_detected=1;}
-			return offset+1;
+		if (str[offset] == ' ') {
+			if (is_space_detected != NULL) {
+				*is_space_detected = 1;
+			}
+			return offset + 1;
 		}
-		if( (str[offset] >= 'A' && str[offset] <= 'Z')||
-			(str[offset] >= 'a' && str[offset] <= 'z') ){
-			if(is_space_detected != NULL){*is_space_detected=0;}
+		if ((str[offset] >= 'A' && str[offset] <= 'Z') || (str[offset] >= 'a' && str[offset] <= 'z')) {
+			if (is_space_detected != NULL) {
+				*is_space_detected = 0;
+			}
 			return offset;
 		}
 		offset++;
@@ -67,60 +72,59 @@ unsigned int next_letter_offset(const char * str,int * is_space_detected){
 	return 0;
 }
 
-float * str2farray(const char * str,size_t * wrote_array_len){
-	unsigned int cnt=1; // 即使没有空格,也应该有1个数字,有n个空格就有n+1个数字
-	float * res=NULL;
-	for (unsigned int i=0;str[i]!=0;i++){
-		if(str[i] == ' '){
+float* str2farray(const char* str, size_t* wrote_array_len) {
+	unsigned int cnt = 1; // 即使没有空格,也应该有1个数字,有n个空格就有n+1个数字
+	float* res = NULL;
+	for (unsigned int i = 0; str[i] != 0; i++) {
+		if (str[i] == ' ') {
 			cnt++;
 		}
 	}
-	SAFE_MALLOC_DEF(res,cnt*sizeof(float));
-	for(unsigned int i=0;i<cnt;i++){
-		res[i]=atof(str);
-		str+=next_space_offset(str); // We don't have to restore the pointer.
+	SAFE_MALLOC_DEF(res, cnt * sizeof(float));
+	for (unsigned int i = 0; i < cnt; i++) {
+		res[i] = atof(str);
+		str += next_space_offset(str); // We don't have to restore the pointer.
 	}
-	if(wrote_array_len != NULL){
-		*wrote_array_len=cnt;
+	if (wrote_array_len != NULL) {
+		*wrote_array_len = cnt;
 	}
 	return res;
 }
 
-unsigned int strlookup(const char *str,const char **tab, size_t lines_of_tab) {
-    for (unsigned int i = 0; i < lines_of_tab; i++) {
-        if (halfcmp(str, tab[i], ' ')) {
-            return i;
-        }
-    }
-    return -1;
+unsigned int strlookup(const char* str, const char** tab, size_t lines_of_tab) {
+	for (unsigned int i = 0; i < lines_of_tab; i++) {
+		if (halfcmp(str, tab[i], ' ')) {
+			return i;
+		}
+	}
+	return -1;
 }
 
-size_t numlen(char * str){
-	size_t len=0;
-	for(;;){
-		if(str[len] != '.' && 
-		(str[len] > '9' || str[len] < '0') ){
-			break;	
+size_t numlen(char* str) {
+	size_t len = 0;
+	for (;;) {
+		if (str[len] != '.' && (str[len] > '9' || str[len] < '0')) {
+			break;
 		}
 		len++;
 	}
 	return len;
 }
 
-int myfgets(char * buffer,int size,FILE *fp){
-	int ch=0;
-	for(unsigned int i=0;i < size;i++){
-		ch=fgetc(fp);
-		if(ch==EOF){
-			buffer[i]=0;
+int myfgets(char* buffer, int size, FILE* fp) {
+	int ch = 0;
+	for (unsigned int i = 0; i < size; i++) {
+		ch = fgetc(fp);
+		if (ch == EOF) {
+			buffer[i] = 0;
 			return i;
 		}
-		if (ch == '\n'){ // remove support for Windows or Mac Platforms.
-			ch=0;
-			buffer[i]=ch;
-			return i+1;
+		if (ch == '\n') { // remove support for Windows or Mac Platforms.
+			ch = 0;
+			buffer[i] = ch;
+			return i + 1;
 		}
-		buffer[i]=ch;
+		buffer[i] = ch;
 	}
-	return size+1;
+	return size + 1;
 }

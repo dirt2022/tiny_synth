@@ -1,0 +1,9 @@
+Language: C
+BasedOnStyle: LLVM
+PointerAlignment: Left
+ReferenceAlignment: Left
+ColumnLimit: 120
+UseTab: Always
+SortIncludes: false
+TabWidth: 8
+IndentWidth: 8
