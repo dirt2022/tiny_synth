@@ -27,13 +27,22 @@ int main(int argc, char* argv[]) {
 		return -1;
 	}
 
-	enum backend_type type = PulseAudio;
+	enum backend_type type;
 	type = strlookup(argv[1], (const char**)backendlist, 2);
+
 	if (type == -1) {
 		printf("Illegal backend.\n");
 		return -1;
 	}
+
+	FILE* fp = fopen(argv[2], "rb");
+	if (fp == NULL) {
+		printf("Unable to open %s\n", argv[2]);
+		return -1;
+	}
+
 	backend_stream_t stream = backend_init(type);
+
 	sintab_init();
 #ifdef _OPENMP
 	omp_set_num_threads(omp_get_max_threads());
@@ -47,11 +56,6 @@ int main(int argc, char* argv[]) {
 	}
 	Calc_Weight();
 #endif
-	FILE* fp = fopen(argv[2], "rb");
-	if (fp == NULL) {
-		printf("Unable to open %s\n", argv[2]);
-		return -1;
-	}
 	FileParse(fp, stream);
 #ifdef _OPENMP
 	DeInit_LoadbalanceTab();
