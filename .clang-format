@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 dirt2022
+#
+# SPDX-License-Identifier: CC0-1.0
+
 Language: C
 BasedOnStyle: LLVM
 PointerAlignment: Left
