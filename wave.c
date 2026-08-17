@@ -14,6 +14,7 @@
 #include "include/player_limit.h"
 #include "include/player_dataapi.h"
 #include "include/player_math.h"
+#include "include/player_thread.h"
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -172,45 +173,32 @@ void WriteWave(float * Buffer,struct WaveTab * wt,struct WaveArgs * arg,size_t l
 		phi[i]=BACKEND_RATE*(wt->Tab2T[j+1]);
 	}
 	delta_percent=1.0f/(float)arg->total_len;
+
 #ifdef _OPENMP
-
-	unsigned int thread_num;
-
-#pragma omp parallel
-	{
-		thread_num=omp_get_num_threads();
+	if (arg->pending_len<THREAD_OFFLOAD_MIN_THRESHOLD){
+		WriteWave_Worker(Buffer, wt, arg, len, arg->pending_len,arg->wrote_len);
+		goto write_finished_work;
 	}
-	unsigned int thread_buffer_workload;
-	unsigned int thread_workload_bias;
-	unsigned int thread_most_work;
-
-	thread_buffer_workload=arg->pending_len/thread_num;
-	thread_workload_bias=arg->pending_len%thread_num;
-	thread_most_work=thread_buffer_workload+thread_workload_bias;
-
-	if (thread_workload_bias == 0){
-		#pragma omp parallel
-		{
-			WriteWave_Worker(Buffer+thread_buffer_workload*omp_get_thread_num(),
-				wt,arg,len,thread_buffer_workload,
-				arg->wrote_len+thread_buffer_workload*omp_get_thread_num());
-		}
-	} else {
-		#pragma omp parallel
-		{
-			if( omp_get_thread_num() != omp_get_num_threads() ){
-			WriteWave_Worker(Buffer+thread_buffer_workload*omp_get_thread_num(),
-				wt,arg,len,thread_buffer_workload,
-				arg->wrote_len+thread_buffer_workload*omp_get_thread_num());
-			} else {
-			WriteWave_Worker(Buffer+thread_buffer_workload*omp_get_thread_num(),
-				wt,arg,len,thread_most_work,
-				arg->wrote_len+thread_buffer_workload*omp_get_thread_num());
-			}
-		}
+	unsigned int sum=0;
+	for (unsigned int i=0;i<thread_num;i++){
+		thread_pendinglen[i] = arg->pending_len/THREAD_WEIGHT_SUM * thread_weight[i];
+		thread_wrote_offset[i]=sum;
+		sum+=thread_pendinglen[i];
+	}
+	if (sum != arg->pending_len){
+		thread_pendinglen[thread_num-1]+=arg->pending_len-sum;
+	}
+#pragma omp parallel proc_bind(close)
+	{
+	unsigned int tid=omp_get_thread_num();
+	WriteWave_Worker(
+		Buffer+thread_wrote_offset[tid],
+		wt, arg, len,
+		thread_pendinglen[tid],
+		arg->wrote_len+thread_wrote_offset[tid]);
 	}
 #else
-	WriteWave_Worker(Buffer,wt,arg,len,arg->pending_len,arg->wrote_len);
+	WriteWave_Worker(Buffer, wt, arg, len, arg->pending_len,arg->wrote_len);
 #endif
 write_finished_work:
 	arg->wrote_len+=arg->pending_len;

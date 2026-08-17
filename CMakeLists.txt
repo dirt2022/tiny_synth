@@ -4,7 +4,7 @@
 cmake_minimum_required(VERSION 4.2)
 project(MusicPlayer)
 
-add_executable(main main.c strapi.c parser.c backend.c wave.c dataapi.c note.c math.c)
+add_executable(main main.c strapi.c parser.c threads_misc.c backend.c wave.c dataapi.c note.c math.c)
 
 option(LTO "Enable Link Time Optimization (LTO/IPO)" OFF)
 option(MULTI-THREAD "Enable multithread support. (OpenMP required)" OFF)

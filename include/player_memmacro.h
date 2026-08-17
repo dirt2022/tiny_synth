@@ -10,6 +10,12 @@
 		abort(); \
 	}
 
+#define SAFE_CALLOC_DEF(ptr,num,elementsize) \
+	ptr=calloc(num,elementsize); \
+	if (ptr == NULL){ \
+		abort(); \
+	}
+
 #define SAFE_REALLOC_DEF(ptr,size,tmpptr) \
 	tmpptr=realloc(ptr,size); \
 	if (tmpptr == NULL){ \

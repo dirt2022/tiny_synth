@@ -13,6 +13,7 @@
 #include "include/player_dataapi.h"
 #include "include/player_parser.h"
 #include "include/player_math.h"
+#include "include/player_thread.h"
 #ifdef _OPENMP
 #include <omp.h>
 #endif
@@ -38,7 +39,15 @@ int main(int argc,char * argv[]){
 	sintab_init();
 #ifdef _OPENMP
 	omp_set_num_threads(omp_get_max_threads());
+	thread_num=omp_get_max_threads();
 	printf("Running with multi-thread support, available threads %d.\n",omp_get_max_threads());
+	printf("Thread speed calibration in progress...\n");
+	Init_LoadbalanceTab();
+	#pragma omp parallel proc_bind(close)
+	{
+		Speed_Check();
+	}
+	Calc_Weight();
 #endif
 	FILE * fp=fopen(argv[2],"rb");
 	if (fp == NULL){
@@ -46,6 +55,9 @@ int main(int argc,char * argv[]){
 		return -1;
 	}
 	FileParse(fp,stream);
+#ifdef _OPENMP
+	DeInit_LoadbalanceTab();
+#endif
 	backend_deinit(type,stream);
 	return 0;
 }
