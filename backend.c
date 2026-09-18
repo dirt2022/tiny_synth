@@ -84,7 +84,7 @@ backend_stream_t backend_init(enum backend_type type) { // thread unsafe
 		stream = (void*)PulseAudio_Init();
 		if (stream == NULL) {
 			printf("Fatal: Could not init the stream\n");
-			abort();
+			exit(-1);
 		}
 		BackendWrite = PulseAudio_Write;
 		inited = 1;
@@ -95,7 +95,7 @@ backend_stream_t backend_init(enum backend_type type) { // thread unsafe
 			stream = (backend_stream_t)fopen("./output.pcm", "w+");
 			if (stream == NULL) {
 				printf("Fatal: Could not init the stream\n");
-				abort();
+				exit(-1);
 			}
 			BackendWrite = File_Write;
 			return stream;
@@ -103,7 +103,7 @@ backend_stream_t backend_init(enum backend_type type) { // thread unsafe
 			stream = fopen(getenv("PLAYER_OUTPUT"), "w+");
 			if (stream == NULL) {
 				printf("Fatal: Could not init the stream\n");
-				abort();
+				exit(-1);
 			}
 			BackendWrite = File_Write;
 			return stream;

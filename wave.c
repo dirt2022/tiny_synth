@@ -58,7 +58,7 @@ void CalcLoudnessAttnTab(struct AttnTab* Tab) {
 	size_t NewAttnTabLen = Tab->Tab2TLen * 2;
 	if (Tab->Tab2TLen % 2 == 1) {
 		printf("Illegal Tab Length\n");
-		abort();
+		exit(-1);
 	}
 	if (Tab->TabLen == 0) {
 		SAFE_MALLOC_DEF(Tab->Attntab, NewAttnTabLen * sizeof(float));
@@ -73,7 +73,7 @@ void CalcLoudnessAttnTab(struct AttnTab* Tab) {
 	for (unsigned int i = 0; i < NewAttnTabLen; i += 4) {
 		if (Tab->Tab2T[i / 2 + 1] < 0) {
 			printf("Fatal Error! The percentage must not be minus.\n");
-			abort();
+			exit(-1);
 		}
 		Tab->Attntab[i] = StartPercent;
 		Tab->Attntab[i + 1] = StartPercent + Tab->Tab2T[i / 2 + 1];

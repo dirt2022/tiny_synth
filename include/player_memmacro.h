@@ -7,20 +7,20 @@
 #define SAFE_MALLOC_DEF(ptr, size)                                                                                     \
 	ptr = malloc(size);                                                                                            \
 	if (ptr == NULL) {                                                                                             \
-		abort();                                                                                               \
+		exit(-1);                                                                                               \
 	}
 
 #define SAFE_CALLOC_DEF(ptr, num, elementsize)                                                                         \
 	ptr = calloc(num, elementsize);                                                                                \
 	if (ptr == NULL) {                                                                                             \
-		abort();                                                                                               \
+		exit(-1);                                                                                               \
 	}
 
 #define SAFE_REALLOC_DEF(ptr, size, tmpptr)                                                                            \
 	tmpptr = realloc(ptr, size);                                                                                   \
 	if (tmpptr == NULL) {                                                                                          \
 		free(ptr);                                                                                             \
-		abort();                                                                                               \
+		exit(-1);                                                                                               \
 	} else {                                                                                                       \
 		ptr = tmpptr;                                                                                          \
 	}

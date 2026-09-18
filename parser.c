@@ -24,7 +24,7 @@
 	inttmpvar = fgetc(fp);                                                                                         \
 	if (inttmpvar == EOF) {                                                                                        \
 		printf("Unexcepted EOF");                                                                              \
-		abort();                                                                                               \
+		exit(-1);                                                                                               \
 	}                                                                                                              \
 	x = inttmpvar;
 
@@ -32,7 +32,7 @@
 	x = fgetc(fp);                                                                                                 \
 	if (x == EOF) {                                                                                                \
 		printf("Unexcepted EOF");                                                                              \
-		abort();                                                                                               \
+		exit(-1);                                                                                               \
 	}
 
 struct GlobalStatus gs = {0};
@@ -115,7 +115,7 @@ static int CosumeTrack(FILE* fp, backend_stream_t s) {
 	backend_write_ret = BackendWrite(s, buffer, len_min * sizeof(float));
 	if (backend_write_ret != len_min * sizeof(float)) {
 		printf("Failed to write buffer!\n");
-		abort();
+		exit(-1);
 	}
 	return 0;
 }
@@ -161,7 +161,7 @@ static void SeekTrack(FILE* fp, int tracknum) {
 				ch = fgetc(fp);
 				if (ch != '\n' && ch != EOF) {
 					printf("Fatal: There isn't a \\n right after the end mark\n");
-					abort();
+					exit(-1);
 				}
 				break;
 			}
