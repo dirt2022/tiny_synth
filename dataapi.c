@@ -77,6 +77,7 @@ void ChainTabDestory(struct ChainTab* headnode) {
 如果表头有数据,就向后追加,如果没有,就直接往这个节点写数据
 **/
 void ChainTabAppend(struct ChainTab** headnode, void* data) {
+	struct ChainTab* node = *headnode;
 	if (*headnode == NULL) {
 		*headnode = ChainTabCreate();
 		(*headnode)->data = data;
@@ -90,6 +91,7 @@ void ChainTabAppend(struct ChainTab** headnode, void* data) {
 		*headnode = (*headnode)->next;
 	}
 	ChainTabAdd(*headnode, data);
+	*headnode = node;
 }
 
 struct ChainTab* ChainTabHeadCosume(struct ChainTab* headnode) {
