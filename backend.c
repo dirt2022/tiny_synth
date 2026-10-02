@@ -13,8 +13,7 @@
 #include "include/player_backend.h"
 #include "include/player_limit.h"
 
-#define SWAP32BIT(x)                                                                                                   \
-	unsigned int u;                                                                                                \
+#define SWAP32BIT(x,u)                                                                                                 \
 	memcpy(&u, &x, sizeof(x));                                                                                     \
 	u = (u << 24) | ((u << 8) & 0x00ff0000) | \
 	    ((u >> 8) & 0x0000ff00) | (u >> 24); \
@@ -37,8 +36,9 @@ static int is_be(void) {
 static int is_be_cpu;
 
 static void buffer_be2le(float* buffer, int size) { // used only on be platform
+	unsigned int u
 	for (unsigned int i = 0; i < size / sizeof(float); i++) {
-		SWAP32BIT(buffer[i]);
+		SWAP32BIT(buffer[i],u);
 	}
 }
 
