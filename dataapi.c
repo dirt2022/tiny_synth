@@ -78,20 +78,19 @@ void ChainTabDestory(struct ChainTab* headnode) {
 **/
 void ChainTabAppend(struct ChainTab** headnode, void* data) {
 	struct ChainTab* node = *headnode;
-	if (*headnode == NULL) {
-		*headnode = ChainTabCreate();
-		(*headnode)->data = data;
+	if (node == NULL) {
+		node = ChainTabCreate();
+		node->data = data;
 		return;
 	}
-	if ((*headnode)->data == NULL) { // 此时不新开元素,就在此节点写数据
-		(*headnode)->data = data;
+	if (node->data == NULL) { // 此时不新开元素,就在此节点写数据
+		node->data = data;
 		return;
 	}
-	while ((*headnode)->next != NULL) {
-		*headnode = (*headnode)->next;
+	while (node->next != NULL) {
+		node = node->next;
 	}
-	ChainTabAdd(*headnode, data);
-	*headnode = node;
+	ChainTabAdd(node, data);
 }
 
 struct ChainTab* ChainTabHeadCosume(struct ChainTab* headnode) {
