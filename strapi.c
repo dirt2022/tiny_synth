@@ -91,7 +91,7 @@ float* str2farray(const char* str, size_t* wrote_array_len) {
 	return res;
 }
 
-unsigned int strlookup(const char* str, const char** tab, size_t lines_of_tab) {
+int strlookup(const char* str, const char** tab, size_t lines_of_tab) {
 	for (unsigned int i = 0; i < lines_of_tab; i++) {
 		if (halfcmp(str, tab[i], ' ')) {
 			return i;
