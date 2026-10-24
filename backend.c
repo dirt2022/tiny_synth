@@ -36,7 +36,7 @@ static int is_be(void) {
 static int is_be_cpu;
 
 static void buffer_be2le(float* buffer, int size) { // used only on be platform
-	unsigned int u
+	unsigned int u;
 	for (unsigned int i = 0; i < size / sizeof(float); i++) {
 		SWAP32BIT(buffer[i],u);
 	}
