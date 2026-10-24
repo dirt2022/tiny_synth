@@ -81,6 +81,7 @@ void ChainTabAppend(struct ChainTab** headnode, void* data) {
 	if (node == NULL) {
 		node = ChainTabCreate();
 		node->data = data;
+		*headnode = node;
 		return;
 	}
 	if (node->data == NULL) { // 此时不新开元素,就在此节点写数据
