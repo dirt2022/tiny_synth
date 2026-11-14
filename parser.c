@@ -20,20 +20,35 @@
 #include "include/player_parser.h"
 #include "include/player_note.h"
 
-#define GETCHAR(fp, x, inttmpvar)                                                                                      \
+#define GETCHAR_RET(fp, x, inttmpvar)                                                                                  \
 	inttmpvar = fgetc(fp);                                                                                         \
 	if (inttmpvar == EOF) {                                                                                        \
 		printf("Unexcepted EOF");                                                                              \
-		exit(-1);                                                                                              \
+		return 1;                                                                                              \
 	}                                                                                                              \
 	x = inttmpvar;
+
+#define GETCHAR_RET_NINT(fp, x)                                                                                        \
+	x = fgetc(fp);                                                                                                 \
+	if (x == EOF) {                                                                                                \
+		printf("Unexcepted EOF");                                                                              \
+		return 1;                                                                                              \
+	}
 
 #define GETCHAR_NINT(fp, x)                                                                                            \
 	x = fgetc(fp);                                                                                                 \
 	if (x == EOF) {                                                                                                \
 		printf("Unexcepted EOF");                                                                              \
-		exit(-1);                                                                                              \
+		return;                                                                                                \
 	}
+
+#define GETCHAR(fp, x, inttmpvar)                                                                                      \
+	inttmpvar = fgetc(fp);                                                                                         \
+	if (inttmpvar == EOF) {                                                                                        \
+		printf("Unexcepted EOF");                                                                              \
+		return;                                                                                                \
+	}                                                                                                              \
+	x = inttmpvar;
 
 struct GlobalStatus gs = {0};
 struct LoudnessLoopTab llpt = {0};
@@ -76,7 +91,7 @@ static int CosumeTrack(FILE* fp, backend_stream_t s) {
 			args[i].skipflag = 0;
 			fseek(fp, *(int*)(ipt[i].line->data), SEEK_SET);
 			for (unsigned int j = 0; j < MAX_LINELEN; j++) {
-				GETCHAR(fp, fbuffer[j], tmpvar);
+				GETCHAR_RET(fp, fbuffer[j], tmpvar);
 				if (fbuffer[j] == '\n') { // only support unix style file.
 					fbuffer[j] = 0;
 					ipt[i].line = ChainTabHeadCosume(ipt[i].line);
@@ -102,7 +117,7 @@ static int CosumeTrack(FILE* fp, backend_stream_t s) {
 		}
 	}
 	if (skipcnt == gs.tracknum) {
-		return 1;
+		return 2;
 	}
 	gs.ticks += (float)len_min / 60 * gs.bpm / BACKEND_RATE;
 	for (unsigned int i = 0; i < gs.tracknum; i++) {
@@ -120,11 +135,11 @@ static int CosumeTrack(FILE* fp, backend_stream_t s) {
 	return 0;
 }
 
-static void SeekTrack(FILE* fp, int tracknum) {
+static int SeekTrack(FILE* fp, int tracknum) {
 	if (gs.SectionInputEnd == 0) {
 		fseek(fp, gs.search_offset, SEEK_SET);
 	} else {
-		return;
+		return 0;
 	}
 	int ch = 0;
 	int found_tracknum = 0;
@@ -136,7 +151,7 @@ static void SeekTrack(FILE* fp, int tracknum) {
 	start:
 		if (ipt[i].line == NULL ||
 		    ipt[i].line->data == NULL) { // 音轨间必须紧密书写, @ 0 ... 下一行就得是 @ 1 .....
-			GETCHAR_NINT(fp, ch);
+			GETCHAR_RET_NINT(fp, ch);
 			if (ch == '@') {
 				offset = myfgets(fbuffer, MAX_LINELEN, fp);
 				SAFE_MALLOC_DEF(data_payload, sizeof(int));
@@ -152,7 +167,7 @@ static void SeekTrack(FILE* fp, int tracknum) {
 			}
 			if (ch == '#') {
 				while (ch != '\n') {
-					GETCHAR_NINT(fp, ch);
+					GETCHAR_RET_NINT(fp, ch);
 				}
 				goto start;
 			}
@@ -161,12 +176,13 @@ static void SeekTrack(FILE* fp, int tracknum) {
 				ch = fgetc(fp);
 				if (ch != '\n' && ch != EOF) {
 					printf("Fatal: There isn't a \\n right after the end mark\n");
-					exit(-1);
+					return 1;
 				}
 				break;
 			}
 		}
 	}
+	return 0;
 }
 
 static void InitPlayerWithCleanUp(void) {
@@ -182,17 +198,20 @@ static void InitPlayerWithCleanUp(void) {
 	}
 }
 
-void PlayerMain(FILE* fp, backend_stream_t s) { // 此处必在一行之首
+int PlayerMain(FILE* fp, backend_stream_t s) { // 此处必在一行之首
 	int res = 0;
 	InitPlayerWithCleanUp();
 	gs.search_offset = ftell(fp);
 	for (;;) {
 		for (unsigned int i = 0; i < gs.tracknum; i++) {
-			SeekTrack(fp, i);
+			res = SeekTrack(fp, i); // 返回值: 0:继续处理 1:EOF或格式错误
+			if (res != 0) {
+				return 1;
+			}
 		}
-		res = CosumeTrack(fp, s);
-		if (res == 1) {
-			return;
+		res = CosumeTrack(fp, s); // 返回值: 0:继续处理 1:EOF 2:处理完毕正常回到命令模式
+		if (res != 0) {
+			return (res == 1) ? 1 : 0;
 		}
 	}
 }
@@ -293,15 +312,20 @@ void FileParse(FILE* fp, backend_stream_t s) {
 			if (gs.tracknum < 0 || gs.tracknum > MAX_TRACKNUM || gs.bpm <= 0 || llpt.Tab == NULL) {
 				printf("Fatal Error: Did you forget to set a reasonable bpm, track count or loudness "
 				       "loop tab?\n");
-				exit(-1);
+				ParserDeinit();
+				return;
 			}
 			for (unsigned int i = 0; i < gs.tracknum; i++) {
 				if (wt[i].Attn == NULL || wt[i].Tab2T == NULL) {
 					printf("Fatal Error: Did you forget to set proper track attributes?\n");
-					exit(-1);
+					ParserDeinit();
+					return;
 				}
 			}
-			PlayerMain(fp, s);
+			if (PlayerMain(fp, s) == 1) {
+				ParserDeinit();
+				return;
+			}
 			break;
 		}
 		case 5: {
