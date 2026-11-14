@@ -24,7 +24,7 @@
 	inttmpvar = fgetc(fp);                                                                                         \
 	if (inttmpvar == EOF) {                                                                                        \
 		printf("Unexcepted EOF");                                                                              \
-		exit(-1);                                                                                               \
+		exit(-1);                                                                                              \
 	}                                                                                                              \
 	x = inttmpvar;
 
@@ -32,7 +32,7 @@
 	x = fgetc(fp);                                                                                                 \
 	if (x == EOF) {                                                                                                \
 		printf("Unexcepted EOF");                                                                              \
-		exit(-1);                                                                                               \
+		exit(-1);                                                                                              \
 	}
 
 struct GlobalStatus gs = {0};
@@ -290,6 +290,17 @@ void FileParse(FILE* fp, backend_stream_t s) {
 			break;
 		}
 		case 4: {
+			if (gs.tracknum < 0 || gs.tracknum > MAX_TRACKNUM || gs.bpm <= 0 || llpt.Tab == NULL) {
+				printf("Fatal Error: Did you forget to set a reasonable bpm, track count or loudness "
+				       "loop tab?\n");
+				exit(-1);
+			}
+			for (unsigned int i = 0; i < gs.tracknum; i++) {
+				if (wt[i].Attn == NULL || wt[i].Tab2T == NULL) {
+					printf("Fatal Error: Did you forget to set proper track attributes?\n");
+					exit(-1);
+				}
+			}
 			PlayerMain(fp, s);
 			break;
 		}
