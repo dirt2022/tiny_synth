@@ -4,7 +4,7 @@ SPDX-FileCopyrightText: 2026 dirt2022
 SPDX-License-Identifier: CC0-1.0
 -->
 
-# FM Synthesizer
+# Additive Synthesizer
 Just a toy. Don't take it seriously.
 A streaming FM synthesizer written in C. Parses `.rdi` script files and renders audio.
 
